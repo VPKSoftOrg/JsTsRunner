@@ -3,12 +3,6 @@ use v8;
 
 mod config;
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 #[tokio::main]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
@@ -22,7 +16,6 @@ pub async fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_updater::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
-            greet,
             load_settings,
             save_settings,
             run_script
