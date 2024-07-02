@@ -3622,8 +3622,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "tauri_template"
-version = "0.0.0"
+name = "js_ts_runner"
+version = "0.1.0"
 dependencies = [
  "confy",
  "serde",

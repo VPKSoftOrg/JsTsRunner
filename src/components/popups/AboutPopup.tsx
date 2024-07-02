@@ -70,19 +70,19 @@ const AboutPopup = ({
         });
     }, []);
 
-    // Open the https://tauri.app URL when the corresponding component is clicked.
+    // Open the https://github.com/VPKSoftOrg/JsTsRunner URL when the corresponding component is clicked.
     const openAppUrl = React.useCallback(() => {
-        void open("https://tauri.app");
+        void open("https://github.com/VPKSoftOrg/JsTsRunner");
     }, []);
 
     // Open the github.com URL when the corresponding component is clicked.
     const openGitHubUrl = React.useCallback(() => {
-        void open("https://github.com/VPKSoftOrg/tauri_react_vite_ts_script");
+        void open("https://github.com/VPKSoftOrg/JsTsRunner");
     }, []);
 
     // Open the latest release from the github.com.
     const manualDownloadClick = React.useCallback(() => {
-        void open("https://github.com/VPKSoftOrg/tauri_react_vite_ts_script/releases/latest");
+        void open("https://github.com/VPKSoftOrg/JsTsRunner/releases/latest");
     }, []);
 
     React.useEffect(() => {
@@ -108,7 +108,7 @@ const AboutPopup = ({
                 <div className="Popup-licenseContent">
                     {`MIT License
 
-Copyright (c) 2024 #COPYRIGHT#
+Copyright (c) 2024 VPKSoft
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
