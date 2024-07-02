@@ -25,7 +25,7 @@ import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
  */
 const App = () => {
     const [greetMsg, setGreetMsg] = useState("");
-    const [name, setName] = useState("");
+    const [evaluationResult, setEvaluationResult] = useState("");
     const [aboutPopupVisible, setAboutPopupVisible] = React.useState(false);
     const [preferencesVisible, setPreferencesVisible] = React.useState(false);
     const [settings, settingsLoaded, updateSettings, reloadSettings] = useSettings();
@@ -52,14 +52,15 @@ const App = () => {
 
     const greet = React.useCallback(async () => {
         // Learn more about Tauri commands at https://github.com/VPKSoftOrg/JsTsRunner/v1/guides/features/command
-        if (name.trim().length > 0) {
-            setGreetMsg(await invoke("greet", { name }));
+        if (evaluationResult.trim().length > 0) {
+            const value: string = await invoke("run_script", { code: evaluationResult });
+            setGreetMsg(value);
         }
-    }, [name]);
+    }, [evaluationResult]);
 
     React.useEffect(() => {
         void greet();
-    }, [greet, name]);
+    }, [greet, evaluationResult]);
 
     const onClose = React.useCallback(() => {
         return false;
@@ -70,7 +71,7 @@ const App = () => {
     }, []);
 
     const onFinish = React.useCallback(async (e: { greetName: string }) => {
-        setName(e.greetName);
+        setEvaluationResult(e.greetName);
     }, []);
 
     const menuItems = React.useMemo(() => {
