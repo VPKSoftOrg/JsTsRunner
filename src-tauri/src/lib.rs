@@ -1,4 +1,5 @@
 use config::{get_app_config, set_app_config, AppConfig};
+use v8;
 
 mod config;
 
@@ -19,7 +20,8 @@ pub async fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             load_settings,
-            save_settings
+            save_settings,
+            run_script
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -45,4 +47,35 @@ async fn load_settings() -> AppConfig {
 #[tauri::command]
 async fn save_settings(config: AppConfig) -> bool {
     set_app_config(config)
+}
+
+#[tauri::command]
+async fn run_script(code: String) -> String {
+    let isolate = &mut v8::Isolate::new(Default::default());
+
+    let scope = &mut v8::HandleScope::new(isolate);
+    let context = v8::Context::new(scope);
+    let scope = &mut v8::ContextScope::new(scope, context);
+
+    let code = v8::String::new(scope, code.as_str()).unwrap();
+    let script = match v8::Script::compile(scope, code, None) {
+        Some(script) => script,
+        None => {
+            return "Error: Failed to compile script.".to_string();
+        }
+    };
+
+    let result = match script.run(scope) {
+        Some(result) => result,
+        None => {
+            return "Error: Failed to run script.".to_string();
+        }
+    };
+
+    let result = result.to_string(scope).unwrap();
+
+    match result.to_string(scope) {
+        Some(result) => result.to_rust_string_lossy(scope),
+        None => "Error: Failed to convert compiled script and results to string.".to_string(),
+    }
 }
