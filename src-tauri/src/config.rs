@@ -33,7 +33,7 @@ impl ::std::default::Default for AppConfig {
 /// # Returns
 /// An AppConfig value
 pub fn get_app_config() -> AppConfig {
-    let result = match confy::load("tauri_template", None) {
+    let result = match confy::load("js_ts_runner", None) {
         Ok(v) => v,
         Err(e) => {
             let result = AppConfig {
@@ -58,7 +58,7 @@ pub fn get_app_config() -> AppConfig {
 /// # Returns
 /// `true` if the config was successfully saved; `false` otherwise.
 pub fn set_app_config(config: AppConfig) -> bool {
-    let result = match confy::store("tauri_template", None, config) {
+    let result = match confy::store("js_ts_runner", None, config) {
         Ok(_) => true,
         Err(_) => false,
     };
