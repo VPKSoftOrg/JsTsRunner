@@ -3,9 +3,11 @@ import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { exit } from "@tauri-apps/plugin-process";
 import { styled } from "styled-components";
-import { Button, Form, Input } from "antd";
-import reactLogo from "./assets/react.svg";
+import { Editor } from "@monaco-editor/react";
 import "./App.css";
+import { Tabs } from "antd";
+import classNames from "classnames";
+import * as ts from "typescript";
 import { StyledTitle } from "./components/app/WindowTitle";
 import { useTranslate } from "./localization/Localization";
 import { AppMenu } from "./menu/AppMenu";
@@ -17,13 +19,18 @@ import { PreferencesPopup } from "./components/popups/PreferencesPopup";
 import { useSettings } from "./utilities/app/Settings";
 import { useWindowStateSaver } from "./hooks/UseWindowStateListener";
 import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
+import { CommonProps } from "./components/Types";
+import { AppMenuToolbar } from "./menu/AppMenuToolbar";
+import { TabbedEditor } from "./components/app/TabbedEditor";
+
+type AppProps = CommonProps;
 
 /**
  * Renders the main application component.
  *
  * @return {JSX.Element} The rendered application component.
  */
-const App = () => {
+const App = ({ className }: AppProps) => {
     const [greetMsg, setGreetMsg] = useState("");
     const [evaluationResult, setEvaluationResult] = useState("");
     const [aboutPopupVisible, setAboutPopupVisible] = React.useState(false);
@@ -128,68 +135,29 @@ const App = () => {
     return (
         <>
             <StyledTitle //
-                title={"JsTsRunner"}
+                title="JsTsRunner"
                 onClose={onClose}
                 darkMode={previewDarkMode ?? settings.dark_mode ?? false}
                 maximizeTitle={translate("maximize")}
                 minimizeTitle={translate("minimize")}
                 closeTitle={translate("close")}
             />
-            <div className="AppMenu">
-                <AppMenu //
-                    items={menuItems}
-                    onItemClick={onMenuItemClick}
-                />
-                <AppToolbar //
-                    toolBarItems={appToolbarItems(translate)}
-                    onItemClick={onMenuItemClick}
-                />
-            </div>
-            <div>
-                <h1>Welcome to Tauri!</h1>
-
-                <div className="row">
-                    <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-                        <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-                    </a>
-                    <a href="https://github.com/VPKSoftOrg/JsTsRunner" target="_blank" rel="noreferrer">
-                        <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-                    </a>
-                    <a href="https://reactjs.org" target="_blank" rel="noreferrer">
-                        <img src={reactLogo} className="logo react" alt="React logo" />
-                    </a>
-                </div>
-
-                <div className="row">
-                    <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-                </div>
-
-                <Form className="row" onFinish={onFinish}>
-                    <Form.Item
-                        name="greetName"
-                        rules={[
-                            {
-                                required: true,
-                                message: translate("enterNameHolder"),
-                            },
-                        ]}
-                    >
-                        <Input id="greet-input" />
-                    </Form.Item>
-                    <Form.Item
-                        wrapperCol={{
-                            offset: 8,
-                            span: 16,
-                        }}
-                    >
-                        <Button type="primary" htmlType="submit">
-                            Submit
-                        </Button>
-                    </Form.Item>
-                </Form>
-
-                <div className="row">
-                    <p>{greetMsg}</p>
+            <AppMenuToolbar //
+                menuItems={menuItems}
+                onItemClick={onMenuItemClick}
+            />
+            <div className={classNames(App.name, className)}>
+                <div id="mainView" className="App-itemsView">
+                    <TabbedEditor //
+                        darkMode={previewDarkMode ?? settings.dark_mode ?? false}
+                    />
+                    <div className="EditorResultContainer">
+                        <Editor //
+                            theme="vs-dark"
+                            className="EditorResult"
+                            language="json"
+                        />
+                    </div>
                 </div>
             </div>
             <AboutPopup //
@@ -215,11 +183,31 @@ const SyledApp = styled(App)`
     height: 100%;
     width: 100%;
     display: contents;
-    .AppMenu {
+    .App-itemsView {
         display: flex;
+        flex: auto; // 100% breaks this
+        width: 100%;
         flex-direction: column;
         min-height: 0px;
-        margin-bottom: 10px;
+    }
+    .TabsContainer {
+        height: 100%;
+    }
+    .EditorCode {
+        height: 100%;
+        width: 100%;
+    }
+    .EditorResultContainer {
+        height: 30%;
+        display: flex;
+        min-height: 0;
+    }
+
+    .ant-tabs-content {
+        height: 100%;
+    }
+    .ant-tabs-content-holder {
+        height: 100%;
     }
 `;
 

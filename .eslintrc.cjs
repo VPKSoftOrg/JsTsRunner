@@ -44,6 +44,7 @@ module.exports = {
         "react/jsx-no-bind": "error",
         "unicorn/no-null": "off",
         "import/order": "warn",
+        "react/jsx-curly-brace-presence": ["warn", { "props": "never", "children": "never" }],
         "unicorn/numeric-separators-style": ["error", { number: { minimumDigits: 0, groupLength: 3 } }],
         "unicorn/filename-case": [
             "error",
