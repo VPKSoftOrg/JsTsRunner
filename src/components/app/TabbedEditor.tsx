@@ -4,15 +4,18 @@ import classNames from "classnames";
 import { Tabs } from "antd";
 import { Editor } from "@monaco-editor/react";
 import ts from "typescript";
-import { invoke } from "@tauri-apps/api/core";
-import { CommonProps } from "../Types";
+import { CommonProps, FileTabData } from "../Types";
 import { useDebounce } from "../../hooks/useDebounce";
+import { getAppState, runScript } from "./TauriWrappers";
 
 /**
  * The props for the {@link TabbedEditor} component.
  */
 type TabbedEditorProps = {
     darkMode: boolean;
+    activeTabScriptType: "typescript" | "javascript";
+    fileTabs: FileTabData[];
+    onNewOutput: (output: string) => void;
 } & CommonProps;
 
 /**
@@ -23,6 +26,8 @@ type TabbedEditorProps = {
 const TabbedEditorComponent = ({
     className, //
     darkMode,
+    fileTabs = [],
+    onNewOutput,
 }: TabbedEditorProps) => {
     const [activeTabKey, setActiveTabKey] = React.useState(0);
     const [editorValue, setEditorValue] = React.useState<string>();
@@ -33,24 +38,27 @@ const TabbedEditorComponent = ({
 
     const tabItems = React.useMemo(() => {
         const items = [];
-        items.push({
-            label: "TODO::File name",
-            key: "1",
-            closable: true,
-            className: "TabPane",
-            children: (
-                <div className="EditorContainer">
-                    <Editor //
-                        language="typescript"
-                        theme={darkMode ? "vs-dark" : "light"}
-                        value={editorValue}
-                        onChange={setEditorValue}
-                    />
-                </div>
-            ),
-        });
+        for (const tab of fileTabs) {
+            items.push({
+                label: tab.path,
+                key: tab.index.toString(),
+                closable: true,
+                className: "TabPane",
+                children: (
+                    <div className="EditorContainer">
+                        <Editor //
+                            language={tab.script_language}
+                            theme={darkMode ? "vs-dark" : "light"}
+                            value={editorValue}
+                            onChange={setEditorValue}
+                        />
+                    </div>
+                ),
+            });
+        }
+
         return items;
-    }, [darkMode, editorValue]);
+    }, [darkMode, editorValue, fileTabs]);
 
     const evalueateValue = React.useCallback(async () => {
         if (editorValue) {
@@ -62,14 +70,28 @@ const TabbedEditorComponent = ({
                 },
             });
 
-            console.log(result.outputText);
+            let value: string = "";
 
-            const value: string = await invoke("run_script", { code: result.outputText });
-            console.log(value);
+            try {
+                value = await runScript(result.outputText);
+            } catch (error) {
+                value = `${error}`;
+            }
+
+            try {
+                const appState = await getAppState();
+                if (appState.log_stack.length > 0) {
+                    value = appState.log_stack.join("\n") + "\n" + value;
+                }
+            } catch (error) {
+                value = `${error}`;
+            }
+
+            onNewOutput(value);
         }
-    }, [editorValue]);
+    }, [editorValue, onNewOutput]);
 
-    useDebounce(evalueateValue, 5_000);
+    useDebounce(evalueateValue, 1_500);
 
     return (
         <Tabs //

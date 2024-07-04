@@ -1,7 +1,9 @@
 use serde_derive::{Deserialize, Serialize};
 
+use crate::types::FileTabData;
+
 /// The software settings.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct AppConfig {
     /// The current application locale used by the i18next library
     locale: String,
@@ -13,6 +15,10 @@ pub struct AppConfig {
     error: bool,
     /// An error message if one occurred.
     error_message: String,
+    /// The list of open files from the Tauri application state.
+    pub files: Vec<FileTabData>,
+    /// The id of the previous file.
+    pub previous_file_id: u64,
 }
 
 // The default value for the application configuration.
@@ -24,6 +30,8 @@ impl ::std::default::Default for AppConfig {
             error: false,
             error_message: "".to_string(),
             dark_mode: false,
+            files: vec![],
+            previous_file_id: 0,
         }
     }
 }
@@ -42,6 +50,8 @@ pub fn get_app_config() -> AppConfig {
                 locale: "en".to_string(),
                 save_window_state: false,
                 dark_mode: false,
+                files: vec![],
+                previous_file_id: 0,
             };
             result
         }

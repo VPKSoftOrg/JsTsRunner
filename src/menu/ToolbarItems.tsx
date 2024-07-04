@@ -1,7 +1,7 @@
 //@ts-expect-error - React is required for JSX
 import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDoorOpen, faGear, faInfo } from "@fortawesome/free-solid-svg-icons";
+import { faDoorOpen, faGear, faInfo, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { LocalizeFunction } from "../localization/Localization";
 
 import { ToolBarItem, ToolBarSeparator } from "./AppToolbar";
@@ -13,12 +13,14 @@ export const appToolbarItems = (localize?: LocalizeFunction): (ToolBarItem<MenuK
         title: localize?.("preferences") ?? "Preferences",
         tooltipTitle: localize?.("preferences") ?? "Preferences",
         clickActionObject: "preferencesMenu",
+        type: "button",
     },
     {
         icon: <FontAwesomeIcon icon={faDoorOpen} />,
         title: localize?.("exitMenu") ?? "Exit",
         tooltipTitle: localize?.("exitMenu") ?? "Exit",
         clickActionObject: "exitMenu",
+        type: "button",
     },
     "|",
     {
@@ -26,5 +28,26 @@ export const appToolbarItems = (localize?: LocalizeFunction): (ToolBarItem<MenuK
         title: localize?.("aboutMenu") ?? "About",
         tooltipTitle: localize?.("aboutMenu") ?? "About",
         clickActionObject: "aboutMenu",
+        type: "button",
+    },
+    "|",
+    {
+        title: localize?.("scriptType") ?? "Script Type",
+        type: "select",
+        tooltipTitle: "",
+        options: [
+            { label: "JavaScript", value: "javascript" },
+            { label: "TypeScript", value: "typescript" },
+        ],
+        fieldNames: { label: "label", value: "value" },
+        name: "language",
+    },
+    "|",
+    {
+        icon: <FontAwesomeIcon icon={faPlus} />,
+        title: localize?.("addNewTab") ?? "New tab",
+        tooltipTitle: localize?.("addNewTab") ?? "New tab",
+        clickActionObject: "addNewTab",
+        type: "button",
     },
 ];

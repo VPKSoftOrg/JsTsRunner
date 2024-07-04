@@ -50,6 +50,7 @@ const TooltipObjectButtonPropsComponent = <T,>({
     objectData,
     children,
     tooltipTitle,
+    key,
     onClick,
 }: TooltipObjectButtonProps<T>) => {
     const onClickCallback = React.useCallback(() => {
@@ -57,7 +58,7 @@ const TooltipObjectButtonPropsComponent = <T,>({
     }, [objectData, onClick]);
 
     return (
-        <Tooltip title={tooltipTitle}>
+        <Tooltip title={tooltipTitle} key={key}>
             <Button //
                 className={classNames(TooltipObjectButton.name, className)}
                 onClick={onClickCallback}

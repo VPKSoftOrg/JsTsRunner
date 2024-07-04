@@ -37,7 +37,11 @@ import { appToolbarItems } from "./ToolbarItems";
  */
 type AppMenuToolbarProps = {
     menuItems: MenuItems;
+    selectValues: {
+        [key: string]: string;
+    };
     onItemClick: (key: MenuKeys) => void;
+    onSelectChange(value: string, name?: string): void;
 } & CommonProps;
 
 /**
@@ -48,7 +52,9 @@ type AppMenuToolbarProps = {
 const AppMenuToolbarComponent = ({
     className, //
     menuItems,
+    selectValues,
     onItemClick,
+    onSelectChange,
 }: AppMenuToolbarProps) => {
     const { translate } = useTranslate();
 
@@ -70,6 +76,8 @@ const AppMenuToolbarComponent = ({
             <AppToolbar //
                 toolBarItems={appToolbarItems(translate)}
                 onItemClick={onToolbarItemInternal}
+                onSelectChange={onSelectChange}
+                selectValues={selectValues}
             />
         </div>
     );

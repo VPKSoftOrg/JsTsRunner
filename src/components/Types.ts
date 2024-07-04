@@ -4,6 +4,16 @@
 type CommonProps = {
     /** The HTML class attribute. */
     className?: string;
+    /** A value which uniquely identifies a node among items in an array. */
+    key?: React.Key | null | undefined;
 };
 
-export type { CommonProps };
+type FileTabData = {
+    index: number;
+    path: string | null;
+    is_temporary: boolean;
+    script_language: string;
+    content: string | null;
+};
+
+export type { CommonProps, FileTabData };

@@ -1,27 +1,23 @@
 import * as React from "react";
 import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { exit } from "@tauri-apps/plugin-process";
 import { styled } from "styled-components";
 import { Editor } from "@monaco-editor/react";
 import "./App.css";
-import { Tabs } from "antd";
 import classNames from "classnames";
-import * as ts from "typescript";
+import { getCurrent } from "@tauri-apps/api/window";
 import { StyledTitle } from "./components/app/WindowTitle";
 import { useTranslate } from "./localization/Localization";
-import { AppMenu } from "./menu/AppMenu";
 import { MenuKeys, appMenuItems } from "./menu/MenuItems";
 import { AboutPopup } from "./components/popups/AboutPopup";
-import { AppToolbar } from "./menu/AppToolbar";
-import { appToolbarItems } from "./menu/ToolbarItems";
 import { PreferencesPopup } from "./components/popups/PreferencesPopup";
 import { useSettings } from "./utilities/app/Settings";
 import { useWindowStateSaver } from "./hooks/UseWindowStateListener";
 import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
-import { CommonProps } from "./components/Types";
+import { CommonProps, FileTabData } from "./components/Types";
 import { AppMenuToolbar } from "./menu/AppMenuToolbar";
 import { TabbedEditor } from "./components/app/TabbedEditor";
+import { AppStateResult, addNewTab, getAppState } from "./components/app/TauriWrappers";
+import { useNotify } from "./utilities/app/Notify";
 
 type AppProps = CommonProps;
 
@@ -31,7 +27,6 @@ type AppProps = CommonProps;
  * @return {JSX.Element} The rendered application component.
  */
 const App = ({ className }: AppProps) => {
-    const [greetMsg, setGreetMsg] = useState("");
     const [evaluationResult, setEvaluationResult] = useState("");
     const [aboutPopupVisible, setAboutPopupVisible] = React.useState(false);
     const [preferencesVisible, setPreferencesVisible] = React.useState(false);
@@ -40,6 +35,18 @@ const App = ({ className }: AppProps) => {
     const { setStateSaverEnabled, restoreState } = useWindowStateSaver(10_000);
     const { setTheme, updateBackround } = useAntdTheme();
     const [previewDarkMode, setPreviewDarkMode] = React.useState<boolean | null>(null);
+    const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: string }>({});
+    const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
+    const appWindow = React.useMemo(() => getCurrent(), []);
+    const [contextHolder, notification] = useNotify();
+
+    React.useEffect(() => {
+        getAppState()
+            .then((result: AppStateResult) => {
+                setFileTabs(result.file_tabs);
+            })
+            .catch(error => notification("error", error));
+    }, [notification]);
 
     React.useEffect(() => {
         if (settingsLoaded && settings !== null) {
@@ -57,18 +64,6 @@ const App = ({ className }: AppProps) => {
         }
     }, [setLocale, setTheme, settings]);
 
-    const greet = React.useCallback(async () => {
-        // Learn more about Tauri commands at https://github.com/VPKSoftOrg/JsTsRunner/v1/guides/features/command
-        if (evaluationResult.trim().length > 0) {
-            const value: string = await invoke("run_script", { code: evaluationResult });
-            setGreetMsg(value);
-        }
-    }, [evaluationResult]);
-
-    React.useEffect(() => {
-        void greet();
-    }, [greet, evaluationResult]);
-
     const onClose = React.useCallback(() => {
         return false;
     }, []);
@@ -77,34 +72,43 @@ const App = ({ className }: AppProps) => {
         setAboutPopupVisible(false);
     }, []);
 
-    const onFinish = React.useCallback(async (e: { greetName: string }) => {
-        setEvaluationResult(e.greetName);
-    }, []);
-
     const menuItems = React.useMemo(() => {
         return appMenuItems(translate);
     }, [translate]);
 
-    const onMenuItemClick = React.useCallback((key: unknown) => {
-        const keyValue = key as MenuKeys;
-        switch (keyValue) {
-            case "exitMenu": {
-                void exit(0);
-                break;
+    const onMenuItemClick = React.useCallback(
+        (key: unknown) => {
+            const keyValue = key as MenuKeys;
+            switch (keyValue) {
+                case "exitMenu": {
+                    void appWindow.close();
+                    break;
+                }
+                case "aboutMenu": {
+                    setAboutPopupVisible(true);
+                    break;
+                }
+                case "preferencesMenu": {
+                    setPreferencesVisible(true);
+                    break;
+                }
+                case "addNewTab": {
+                    void addNewTab({ index: 0, path: null, is_temporary: true, script_language: selectedValues["language"], content: null })
+                        .then(() => {
+                            getAppState()
+                                .then((result: AppStateResult) => setFileTabs(result.file_tabs))
+                                .catch(error => notification("error", error));
+                        })
+                        .catch(error => notification("error", error));
+                    break;
+                }
+                default: {
+                    break;
+                }
             }
-            case "aboutMenu": {
-                setAboutPopupVisible(true);
-                break;
-            }
-            case "preferencesMenu": {
-                setPreferencesVisible(true);
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-    }, []);
+        },
+        [appWindow, notification, selectedValues]
+    );
 
     const onPreferencesClose = React.useCallback(() => {
         setPreferencesVisible(false);
@@ -128,12 +132,42 @@ const App = ({ className }: AppProps) => {
         [setTheme]
     );
 
+    const onNewOutput = React.useCallback(
+        (output: string) => {
+            setEvaluationResult(output);
+        },
+        [setEvaluationResult]
+    );
+
+    const onSelectedValueChanged = React.useCallback(
+        (value: string, name?: string) => {
+            if (name) {
+                setSelectedValues({ ...selectedValues, [name]: value });
+            }
+        },
+        [selectedValues]
+    );
+
+    React.useEffect(() => {
+        const unlisten = async () =>
+            await appWindow.onCloseRequested(async (/*event: CloseRequestedEvent*/) => {
+                // Currently allow the application to close always.
+                // The following call would prevent the application from closing:
+                // event.preventDefault();
+            });
+
+        return () => {
+            void unlisten();
+        };
+    }, [appWindow]);
+
     if (!settingsLoaded || settings === null) {
         return <div>Loading...</div>;
     }
 
     return (
         <>
+            {contextHolder}
             <StyledTitle //
                 title="JsTsRunner"
                 onClose={onClose}
@@ -145,17 +179,22 @@ const App = ({ className }: AppProps) => {
             <AppMenuToolbar //
                 menuItems={menuItems}
                 onItemClick={onMenuItemClick}
+                selectValues={selectedValues}
+                onSelectChange={onSelectedValueChanged}
             />
             <div className={classNames(App.name, className)}>
                 <div id="mainView" className="App-itemsView">
                     <TabbedEditor //
                         darkMode={previewDarkMode ?? settings.dark_mode ?? false}
+                        onNewOutput={onNewOutput}
+                        activeTabScriptType={selectedValues["language"] as "typescript" | "javascript"}
+                        fileTabs={fileTabs}
                     />
                     <div className="EditorResultContainer">
                         <Editor //
-                            theme="vs-dark"
+                            theme={previewDarkMode ?? settings.dark_mode ?? false ? "vs-dark" : "light"}
                             className="EditorResult"
-                            language="json"
+                            value={evaluationResult}
                         />
                     </div>
                 </div>

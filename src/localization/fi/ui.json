@@ -18,5 +18,8 @@
     "close": "Sulje",
     "language": "Kieli",
     "cancel": "Peruuta",
-    "darkMode": "Tumma tila"
+    "darkMode": "Tumma tila",
+    "programmingLanguage": "Ohjelmointikieli",
+    "scriptType": "Skriptin tyyppi",
+    "addNewTab": "Uusi välilehti"
 }
