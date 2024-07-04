@@ -35,15 +35,17 @@ const App = ({ className }: AppProps) => {
     const { setStateSaverEnabled, restoreState } = useWindowStateSaver(10_000);
     const { setTheme, updateBackround } = useAntdTheme();
     const [previewDarkMode, setPreviewDarkMode] = React.useState<boolean | null>(null);
-    const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: string }>({});
+    const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: string }>({ language: "javascript" });
     const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
     const appWindow = React.useMemo(() => getCurrent(), []);
     const [contextHolder, notification] = useNotify();
+    const indexRef = React.useRef<number>(0);
 
     React.useEffect(() => {
         getAppState()
             .then((result: AppStateResult) => {
                 setFileTabs(result.file_tabs);
+                indexRef.current = result.file_index;
             })
             .catch(error => notification("error", error));
     }, [notification]);
@@ -93,10 +95,23 @@ const App = ({ className }: AppProps) => {
                     break;
                 }
                 case "addNewTab": {
-                    void addNewTab({ index: 0, path: null, is_temporary: true, script_language: selectedValues["language"], content: null })
+                    let newFileName = translate("newFileWithIndex", "New file {{index}}", { index: indexRef.current + 1 });
+                    newFileName += selectedValues["language"] === "typescript" ? ".ts" : ".js";
+
+                    void addNewTab({
+                        index: 0,
+                        path: null,
+                        is_temporary: true,
+                        script_language: selectedValues["language"],
+                        content: null,
+                        file_name: newFileName,
+                    })
                         .then(() => {
                             getAppState()
-                                .then((result: AppStateResult) => setFileTabs(result.file_tabs))
+                                .then((result: AppStateResult) => {
+                                    setFileTabs(result.file_tabs);
+                                    indexRef.current = result.file_index;
+                                })
                                 .catch(error => notification("error", error));
                         })
                         .catch(error => notification("error", error));
@@ -107,7 +122,7 @@ const App = ({ className }: AppProps) => {
                 }
             }
         },
-        [appWindow, notification, selectedValues]
+        [appWindow, notification, selectedValues, translate]
     );
 
     const onPreferencesClose = React.useCallback(() => {
