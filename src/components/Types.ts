@@ -11,6 +11,7 @@ type CommonProps = {
 type FileTabData = {
     index: number;
     path: string | null;
+    file_name: string;
     is_temporary: boolean;
     script_language: string;
     content: string | null;

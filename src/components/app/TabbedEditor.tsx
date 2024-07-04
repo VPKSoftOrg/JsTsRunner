@@ -31,6 +31,7 @@ const TabbedEditorComponent = ({
 }: TabbedEditorProps) => {
     const [activeTabKey, setActiveTabKey] = React.useState(0);
     const [editorValue, setEditorValue] = React.useState<string>();
+    const [scriptType, setScriptType] = React.useState<"typescript" | "javascript">("typescript");
 
     const onTabChange = React.useCallback((activeTabKey?: string) => {
         setActiveTabKey(activeTabKey ? Number.parseInt(activeTabKey) : 0);
@@ -40,19 +41,17 @@ const TabbedEditorComponent = ({
         const items = [];
         for (const tab of fileTabs) {
             items.push({
-                label: tab.path,
+                label: tab.file_name,
                 key: tab.index.toString(),
                 closable: true,
                 className: "TabPane",
                 children: (
-                    <div className="EditorContainer">
-                        <Editor //
-                            language={tab.script_language}
-                            theme={darkMode ? "vs-dark" : "light"}
-                            value={editorValue}
-                            onChange={setEditorValue}
-                        />
-                    </div>
+                    <Editor //
+                        language={tab.script_language}
+                        theme={darkMode ? "vs-dark" : "light"}
+                        value={editorValue}
+                        onChange={setEditorValue}
+                    />
                 ),
             });
         }
@@ -60,20 +59,41 @@ const TabbedEditorComponent = ({
         return items;
     }, [darkMode, editorValue, fileTabs]);
 
+    React.useEffect(() => {
+        if (fileTabs.length > 0 && !fileTabs.some(f => f.index === activeTabKey)) {
+            setActiveTabKey(fileTabs[0].index);
+        }
+    }, [fileTabs, activeTabKey]);
+
+    React.useEffect(() => {
+        if (fileTabs.length > 0) {
+            const tab = fileTabs.find(f => f.index === activeTabKey);
+            if (tab) {
+                setEditorValue(tab.content ?? "");
+                setScriptType(tab.script_language as "typescript" | "javascript");
+            }
+        }
+    }, [fileTabs, activeTabKey]);
+
     const evalueateValue = React.useCallback(async () => {
         if (editorValue) {
-            const result = ts.transpileModule(editorValue, {
-                compilerOptions: {
-                    target: ts.ScriptTarget.ES2023,
-                    module: ts.ModuleKind.ESNext,
-                    noEmit: false,
-                },
-            });
-
+            let script = "";
+            if (scriptType === "typescript") {
+                const result = ts.transpileModule(editorValue, {
+                    compilerOptions: {
+                        target: ts.ScriptTarget.ES2023,
+                        module: ts.ModuleKind.ESNext,
+                        noEmit: false,
+                    },
+                });
+                script = result.outputText;
+            } else {
+                script = editorValue;
+            }
             let value: string = "";
 
             try {
-                value = await runScript(result.outputText);
+                value = await runScript(script);
             } catch (error) {
                 value = `${error}`;
             }
@@ -89,9 +109,9 @@ const TabbedEditorComponent = ({
 
             onNewOutput(value);
         }
-    }, [editorValue, onNewOutput]);
+    }, [editorValue, onNewOutput, scriptType]);
 
-    useDebounce(evalueateValue, 1_500);
+    useDebounce(evalueateValue, 1_500, [editorValue]);
 
     return (
         <Tabs //

@@ -1,3 +1,4 @@
 {
-    "updateCheckFailedFile": "Tiedostoa avataessa tapahtui virhe: {{error}}."
+    "updateCheckFailedFile": "Tiedostoa avataessa tapahtui virhe: {{error}}.",
+    "newFileWithIndex": "Uusi tiedosto {{index}}"
 }

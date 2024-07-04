@@ -21,5 +21,6 @@
     "darkMode": "Dark mode",
     "programmingLanguage": "Programming language",
     "scriptType": "Script type",
-    "addNewTab": "New tab"
+    "addNewTab": "New tab",
+    "newFile": "New file"
 }

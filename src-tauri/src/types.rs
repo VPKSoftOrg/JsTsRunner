@@ -56,6 +56,7 @@ pub struct AppStateResult {
 pub struct FileTabData {
     pub index: u64,
     pub path: Option<String>,
+    pub file_name: String,
     pub is_temporary: bool,
     pub script_language: String,
     pub content: Option<String>,
