@@ -32,7 +32,7 @@ import { ReloadOutlined, DownloadOutlined } from "@ant-design/icons";
 import { CommonProps } from "../Types";
 import { useTranslate } from "../../localization/Localization";
 import { useNotify } from "../../utilities/app/Notify";
-import { GithubLogo, LogoImage } from "../../utilities/app/Images";
+import { GithubLogo, GithubLogoWhite, LogoImage } from "../../utilities/app/Images";
 import { useTauriUpdater } from "../../hooks/UseTauriUpdater";
 
 /**
@@ -45,11 +45,14 @@ type AboutPopupProps = {
     onClose: () => void;
     /** A  text color for highlighted text. */
     textColor: string;
+    /** A value indicating whether dark mode is enabled. */
+    darkMode: boolean;
 } & CommonProps;
 
 const AboutPopup = ({
     className, //
     visible,
+    darkMode,
     onClose,
 }: AboutPopupProps) => {
     const { translate } = useTranslate();
@@ -132,7 +135,7 @@ SOFTWARE."
                 <div className="LogoImages">
                     <img src={LogoImage} className="LogoImage" onClick={openAppUrl} />
 
-                    <img src={GithubLogo} className="LogoImage" onClick={openGitHubUrl} />
+                    <img src={darkMode ? GithubLogoWhite : GithubLogo} className="LogoImage" onClick={openGitHubUrl} />
                 </div>
                 <div
                     className="Popup-UpdateNotify" //
