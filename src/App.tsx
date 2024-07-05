@@ -1,30 +1,32 @@
 import * as React from "react";
 import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { exit } from "@tauri-apps/plugin-process";
 import { styled } from "styled-components";
-import { Button, Form, Input } from "antd";
-import reactLogo from "./assets/react.svg";
+import { Editor } from "@monaco-editor/react";
 import "./App.css";
+import classNames from "classnames";
+import { getCurrent } from "@tauri-apps/api/window";
 import { StyledTitle } from "./components/app/WindowTitle";
 import { useTranslate } from "./localization/Localization";
-import { AppMenu } from "./menu/AppMenu";
 import { MenuKeys, appMenuItems } from "./menu/MenuItems";
 import { AboutPopup } from "./components/popups/AboutPopup";
-import { AppToolbar } from "./menu/AppToolbar";
-import { appToolbarItems } from "./menu/ToolbarItems";
 import { PreferencesPopup } from "./components/popups/PreferencesPopup";
 import { useSettings } from "./utilities/app/Settings";
 import { useWindowStateSaver } from "./hooks/UseWindowStateListener";
 import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
+import { CommonProps, FileTabData } from "./components/Types";
+import { AppMenuToolbar } from "./menu/AppMenuToolbar";
+import { TabbedEditor } from "./components/app/TabbedEditor";
+import { AppStateResult, addNewTab, getAppState } from "./components/app/TauriWrappers";
+import { useNotify } from "./utilities/app/Notify";
+
+type AppProps = CommonProps;
 
 /**
  * Renders the main application component.
  *
  * @return {JSX.Element} The rendered application component.
  */
-const App = () => {
-    const [greetMsg, setGreetMsg] = useState("");
+const App = ({ className }: AppProps) => {
     const [evaluationResult, setEvaluationResult] = useState("");
     const [aboutPopupVisible, setAboutPopupVisible] = React.useState(false);
     const [preferencesVisible, setPreferencesVisible] = React.useState(false);
@@ -33,6 +35,20 @@ const App = () => {
     const { setStateSaverEnabled, restoreState } = useWindowStateSaver(10_000);
     const { setTheme, updateBackround } = useAntdTheme();
     const [previewDarkMode, setPreviewDarkMode] = React.useState<boolean | null>(null);
+    const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: string }>({ language: "javascript" });
+    const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
+    const appWindow = React.useMemo(() => getCurrent(), []);
+    const [contextHolder, notification] = useNotify();
+    const indexRef = React.useRef<number>(0);
+
+    React.useEffect(() => {
+        getAppState()
+            .then((result: AppStateResult) => {
+                setFileTabs(result.file_tabs);
+                indexRef.current = result.file_index;
+            })
+            .catch(error => notification("error", error));
+    }, [notification]);
 
     React.useEffect(() => {
         if (settingsLoaded && settings !== null) {
@@ -50,18 +66,6 @@ const App = () => {
         }
     }, [setLocale, setTheme, settings]);
 
-    const greet = React.useCallback(async () => {
-        // Learn more about Tauri commands at https://github.com/VPKSoftOrg/JsTsRunner/v1/guides/features/command
-        if (evaluationResult.trim().length > 0) {
-            const value: string = await invoke("run_script", { code: evaluationResult });
-            setGreetMsg(value);
-        }
-    }, [evaluationResult]);
-
-    React.useEffect(() => {
-        void greet();
-    }, [greet, evaluationResult]);
-
     const onClose = React.useCallback(() => {
         return false;
     }, []);
@@ -70,34 +74,56 @@ const App = () => {
         setAboutPopupVisible(false);
     }, []);
 
-    const onFinish = React.useCallback(async (e: { greetName: string }) => {
-        setEvaluationResult(e.greetName);
-    }, []);
-
     const menuItems = React.useMemo(() => {
         return appMenuItems(translate);
     }, [translate]);
 
-    const onMenuItemClick = React.useCallback((key: unknown) => {
-        const keyValue = key as MenuKeys;
-        switch (keyValue) {
-            case "exitMenu": {
-                void exit(0);
-                break;
+    const onMenuItemClick = React.useCallback(
+        (key: unknown) => {
+            const keyValue = key as MenuKeys;
+            switch (keyValue) {
+                case "exitMenu": {
+                    void appWindow.close();
+                    break;
+                }
+                case "aboutMenu": {
+                    setAboutPopupVisible(true);
+                    break;
+                }
+                case "preferencesMenu": {
+                    setPreferencesVisible(true);
+                    break;
+                }
+                case "addNewTab": {
+                    let newFileName = translate("newFileWithIndex", "New file {{index}}", { index: indexRef.current + 1 });
+                    newFileName += selectedValues["language"] === "typescript" ? ".ts" : ".js";
+
+                    void addNewTab({
+                        index: 0,
+                        path: null,
+                        is_temporary: true,
+                        script_language: selectedValues["language"],
+                        content: null,
+                        file_name: newFileName,
+                    })
+                        .then(() => {
+                            getAppState()
+                                .then((result: AppStateResult) => {
+                                    setFileTabs(result.file_tabs);
+                                    indexRef.current = result.file_index;
+                                })
+                                .catch(error => notification("error", error));
+                        })
+                        .catch(error => notification("error", error));
+                    break;
+                }
+                default: {
+                    break;
+                }
             }
-            case "aboutMenu": {
-                setAboutPopupVisible(true);
-                break;
-            }
-            case "preferencesMenu": {
-                setPreferencesVisible(true);
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-    }, []);
+        },
+        [appWindow, notification, selectedValues, translate]
+    );
 
     const onPreferencesClose = React.useCallback(() => {
         setPreferencesVisible(false);
@@ -121,75 +147,71 @@ const App = () => {
         [setTheme]
     );
 
+    const onNewOutput = React.useCallback(
+        (output: string) => {
+            setEvaluationResult(output);
+        },
+        [setEvaluationResult]
+    );
+
+    const onSelectedValueChanged = React.useCallback(
+        (value: string, name?: string) => {
+            if (name) {
+                setSelectedValues({ ...selectedValues, [name]: value });
+            }
+        },
+        [selectedValues]
+    );
+
+    React.useEffect(() => {
+        const unlisten = async () =>
+            await appWindow.onCloseRequested(async (/*event: CloseRequestedEvent*/) => {
+                // Currently allow the application to close always.
+                // The following call would prevent the application from closing:
+                // event.preventDefault();
+            });
+
+        return () => {
+            void unlisten();
+        };
+    }, [appWindow]);
+
     if (!settingsLoaded || settings === null) {
         return <div>Loading...</div>;
     }
 
     return (
         <>
+            {contextHolder}
             <StyledTitle //
-                title={"JsTsRunner"}
+                title="JsTsRunner"
                 onClose={onClose}
                 darkMode={previewDarkMode ?? settings.dark_mode ?? false}
                 maximizeTitle={translate("maximize")}
                 minimizeTitle={translate("minimize")}
                 closeTitle={translate("close")}
             />
-            <div className="AppMenu">
-                <AppMenu //
-                    items={menuItems}
-                    onItemClick={onMenuItemClick}
-                />
-                <AppToolbar //
-                    toolBarItems={appToolbarItems(translate)}
-                    onItemClick={onMenuItemClick}
-                />
-            </div>
-            <div>
-                <h1>Welcome to Tauri!</h1>
-
-                <div className="row">
-                    <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-                        <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-                    </a>
-                    <a href="https://github.com/VPKSoftOrg/JsTsRunner" target="_blank" rel="noreferrer">
-                        <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-                    </a>
-                    <a href="https://reactjs.org" target="_blank" rel="noreferrer">
-                        <img src={reactLogo} className="logo react" alt="React logo" />
-                    </a>
-                </div>
-
-                <div className="row">
-                    <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-                </div>
-
-                <Form className="row" onFinish={onFinish}>
-                    <Form.Item
-                        name="greetName"
-                        rules={[
-                            {
-                                required: true,
-                                message: translate("enterNameHolder"),
-                            },
-                        ]}
-                    >
-                        <Input id="greet-input" />
-                    </Form.Item>
-                    <Form.Item
-                        wrapperCol={{
-                            offset: 8,
-                            span: 16,
-                        }}
-                    >
-                        <Button type="primary" htmlType="submit">
-                            Submit
-                        </Button>
-                    </Form.Item>
-                </Form>
-
-                <div className="row">
-                    <p>{greetMsg}</p>
+            <AppMenuToolbar //
+                menuItems={menuItems}
+                onItemClick={onMenuItemClick}
+                selectValues={selectedValues}
+                onSelectChange={onSelectedValueChanged}
+            />
+            <div className={classNames(App.name, className)}>
+                <div id="mainView" className="App-itemsView">
+                    <TabbedEditor //
+                        darkMode={previewDarkMode ?? settings.dark_mode ?? false}
+                        onNewOutput={onNewOutput}
+                        activeTabScriptType={selectedValues["language"] as "typescript" | "javascript"}
+                        fileTabs={fileTabs}
+                    />
+                    <div className="EditorResultContainer">
+                        <Editor //
+                            theme={previewDarkMode ?? settings.dark_mode ?? false ? "vs-dark" : "light"}
+                            className="EditorResult"
+                            value={evaluationResult}
+                        />
+                    </div>
                 </div>
             </div>
             <AboutPopup //
@@ -215,11 +237,31 @@ const SyledApp = styled(App)`
     height: 100%;
     width: 100%;
     display: contents;
-    .AppMenu {
+    .App-itemsView {
         display: flex;
+        flex: auto; // 100% breaks this
+        width: 100%;
         flex-direction: column;
         min-height: 0px;
-        margin-bottom: 10px;
+    }
+    .TabsContainer {
+        height: 100%;
+    }
+    .EditorCode {
+        height: 100%;
+        width: 100%;
+    }
+    .EditorResultContainer {
+        height: 30%;
+        display: flex;
+        min-height: 0;
+    }
+
+    .ant-tabs-content {
+        height: 100%;
+    }
+    .ant-tabs-content-holder {
+        height: 100%;
     }
 `;
 

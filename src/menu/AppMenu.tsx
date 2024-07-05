@@ -56,10 +56,7 @@ const AppMenu = ({
 };
 
 const StyledAppMenu = styled(AppMenu)`
-    display: flex;
-    flex-direction: column;
-    min-height: 0px;
-    margin-bottom: 10px;
+    // Add style(s) here
 `;
 
 export { StyledAppMenu as AppMenu };

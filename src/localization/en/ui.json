@@ -18,5 +18,9 @@
     "close": "Close",
     "language": "Language",
     "cancel": "Cancel",
-    "darkMode": "Dark mode"
+    "darkMode": "Dark mode",
+    "programmingLanguage": "Programming language",
+    "scriptType": "Script type",
+    "addNewTab": "New tab",
+    "newFile": "New file"
 }
