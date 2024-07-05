@@ -47,6 +47,7 @@ const TabbedEditorComponent = ({
                 className: "TabPane",
                 children: (
                     <Editor //
+                        className="Editor"
                         language={tab.script_language}
                         theme={darkMode ? "vs-dark" : "light"}
                         value={editorValue}
@@ -125,19 +126,11 @@ const TabbedEditorComponent = ({
 };
 
 const TabbedEditor = styled(TabbedEditorComponent)`
-    display: flex;
-    min-height: 0;
+    width: 100%;
     height: 70%;
-    .EditorContainer {
+    .TabPane {
         height: 100%;
         width: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    .TabPane {
-        display: flex;
-        min-height: 0;
-        height: 100%;
     }
 `;
 
