@@ -27,10 +27,18 @@ type AppProps = CommonProps;
  * @return {JSX.Element} The rendered application component.
  */
 const App = ({ className }: AppProps) => {
+    const [contextHolder, notification] = useNotify();
+    const settingsErrorCallback = React.useCallback(
+        (error: Error | string | unknown) => {
+            notification("error", `${error}`);
+        },
+        [notification]
+    );
+
     const [evaluationResult, setEvaluationResult] = useState("");
     const [aboutPopupVisible, setAboutPopupVisible] = React.useState(false);
     const [preferencesVisible, setPreferencesVisible] = React.useState(false);
-    const [settings, settingsLoaded, updateSettings, reloadSettings] = useSettings();
+    const [settings, settingsLoaded, updateSettings, reloadSettings] = useSettings(settingsErrorCallback);
     const { token } = useAntdToken();
     const { setStateSaverEnabled, restoreState } = useWindowStateSaver(10_000);
     const { setTheme, updateBackround } = useAntdTheme();
@@ -38,7 +46,6 @@ const App = ({ className }: AppProps) => {
     const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: string }>({ language: "javascript" });
     const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
     const appWindow = React.useMemo(() => getCurrent(), []);
-    const [contextHolder, notification] = useNotify();
     const indexRef = React.useRef<number>(0);
 
     React.useEffect(() => {
@@ -218,6 +225,7 @@ const App = ({ className }: AppProps) => {
                 visible={aboutPopupVisible}
                 onClose={aboutPopupClose}
                 textColor="white"
+                darkMode={previewDarkMode ?? settings.dark_mode ?? false}
             />
             {updateSettings && (
                 <PreferencesPopup //
@@ -227,6 +235,7 @@ const App = ({ className }: AppProps) => {
                     settings={settings}
                     translate={translate}
                     toggleDarkMode={toggleDarkMode}
+                    notification={notification}
                 />
             )}
         </>

@@ -30,6 +30,7 @@ import { CheckboxChangeEvent } from "antd/es/checkbox";
 import { Settings } from "../../utilities/app/Settings";
 import { CommonProps } from "../Types";
 import { Locales, LocalizeFunction, currentLocales } from "../../localization/Localization";
+import { NotificationType } from "../../utilities/app/Notify";
 
 /**
  * The props for the {@link PreferencesPopup} component.
@@ -39,6 +40,7 @@ type PreferencesPopupProps = {
     visible: boolean;
     /** The current program settings. */
     settings: Settings;
+    notification: (type: NotificationType, title: string | null | undefined | Error, duration?: number) => void;
     /** A call back to toggle the dark mode. */
     toggleDarkMode: (antdTheme: "light" | "dark") => void;
     /** A call back to update the settings. */
@@ -58,6 +60,7 @@ const PreferencesPopupComponent = ({
     className, //
     visible,
     settings,
+    notification,
     toggleDarkMode,
     onClose,
     updateSettings,
@@ -98,10 +101,14 @@ const PreferencesPopupComponent = ({
 
     // The OK button was clicked.
     const onOkClick = React.useCallback(() => {
-        void updateSettings(settingsInternal).then(() => {
-            onClose();
-        });
-    }, [onClose, settingsInternal, updateSettings]);
+        void updateSettings(settingsInternal)
+            .then(() => {
+                onClose();
+            })
+            .catch(error => {
+                notification("error", error);
+            });
+    }, [notification, onClose, settingsInternal, updateSettings]);
 
     // The Cancel button was clicked.
     const onCancelClick = React.useCallback(() => {
