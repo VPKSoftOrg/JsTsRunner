@@ -16,8 +16,9 @@ import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
 import { CommonProps, FileTabData } from "./components/Types";
 import { AppMenuToolbar } from "./menu/AppMenuToolbar";
 import { TabbedEditor } from "./components/app/TabbedEditor";
-import { AppStateResult, addNewTab, getAppState } from "./components/app/TauriWrappers";
+import { AppStateResult, addNewTab, getAppState, loadFileState, saveOpenTabs, updateOpenTabs } from "./components/app/TauriWrappers";
 import { useNotify } from "./utilities/app/Notify";
+import { useDebounce } from "./hooks/useDebounce";
 
 type AppProps = CommonProps;
 
@@ -47,15 +48,24 @@ const App = ({ className }: AppProps) => {
     const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
     const appWindow = React.useMemo(() => getCurrent(), []);
     const indexRef = React.useRef<number>(0);
+    const appStateLoaded = React.useRef<boolean>(false);
 
     React.useEffect(() => {
-        getAppState()
-            .then((result: AppStateResult) => {
-                setFileTabs(result.file_tabs);
-                indexRef.current = result.file_index;
+        if (appStateLoaded.current && !settingsLoaded) {
+            return;
+        }
+        loadFileState()
+            .then(() => {
+                getAppState()
+                    .then((result: AppStateResult) => {
+                        setFileTabs(result.file_tabs);
+                        indexRef.current = result.file_index;
+                        appStateLoaded.current = true;
+                    })
+                    .catch(error => notification("error", error));
             })
             .catch(error => notification("error", error));
-    }, [notification]);
+    }, [notification, settingsLoaded]);
 
     React.useEffect(() => {
         if (settingsLoaded && settings !== null) {
@@ -72,6 +82,19 @@ const App = ({ className }: AppProps) => {
             setTheme(settings.dark_mode ? "dark" : "light");
         }
     }, [setLocale, setTheme, settings]);
+
+    const saveFileTabs = React.useCallback(() => {
+        if (!appStateLoaded.current || !settingsLoaded) {
+            return;
+        }
+        void updateOpenTabs(fileTabs)
+            .then(() => {
+                void saveOpenTabs().catch(error => notification("error", error));
+            })
+            .catch(error => notification("error", error));
+    }, [fileTabs, notification, settingsLoaded]);
+
+    useDebounce(saveFileTabs, 5_000);
 
     const onClose = React.useCallback(() => {
         return false;
@@ -211,6 +234,7 @@ const App = ({ className }: AppProps) => {
                         onNewOutput={onNewOutput}
                         activeTabScriptType={selectedValues["language"] as "typescript" | "javascript"}
                         fileTabs={fileTabs}
+                        setFileTabs={setFileTabs}
                     />
                     <div className="EditorResultContainer">
                         <Editor //

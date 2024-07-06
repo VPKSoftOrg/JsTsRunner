@@ -15,6 +15,7 @@ type TabbedEditorProps = {
     darkMode: boolean;
     activeTabScriptType: "typescript" | "javascript";
     fileTabs: FileTabData[];
+    setFileTabs: (fileTabs: FileTabData[]) => void;
     onNewOutput: (output: string) => void;
 } & CommonProps;
 
@@ -28,17 +29,34 @@ const TabbedEditorComponent = ({
     darkMode,
     fileTabs = [],
     onNewOutput,
+    setFileTabs,
 }: TabbedEditorProps) => {
     const [activeTabKey, setActiveTabKey] = React.useState(0);
-    const [editorValue, setEditorValue] = React.useState<string>();
     const [scriptType, setScriptType] = React.useState<"typescript" | "javascript">("typescript");
 
-    const onTabChange = React.useCallback((activeTabKey?: string) => {
-        setActiveTabKey(activeTabKey ? Number.parseInt(activeTabKey) : 0);
-    }, []);
+    const onTabChange = React.useCallback(
+        (activeTabKey?: string) => {
+            const newKey = Number.parseInt(activeTabKey ?? "0");
+            const language = fileTabs.find(f => f.index === newKey)?.script_language;
+            setScriptType((language ?? "typescript") as "typescript" | "javascript");
+            setActiveTabKey(newKey);
+        },
+        [fileTabs]
+    );
+
+    const onEditValueChange = React.useCallback(
+        (value: string | undefined) => {
+            const newTabs = [...fileTabs];
+            const index = newTabs.findIndex(f => f.index === activeTabKey);
+            newTabs[index].content = value ?? null;
+            setFileTabs(newTabs);
+        },
+        [activeTabKey, fileTabs, setFileTabs]
+    );
 
     const tabItems = React.useMemo(() => {
         const items = [];
+
         for (const tab of fileTabs) {
             items.push({
                 label: tab.file_name,
@@ -50,15 +68,15 @@ const TabbedEditorComponent = ({
                         className="Editor"
                         language={tab.script_language}
                         theme={darkMode ? "vs-dark" : "light"}
-                        value={editorValue}
-                        onChange={setEditorValue}
+                        value={tab.content ?? undefined}
+                        onChange={onEditValueChange}
                     />
                 ),
             });
         }
 
         return items;
-    }, [darkMode, editorValue, fileTabs]);
+    }, [darkMode, fileTabs, onEditValueChange]);
 
     React.useEffect(() => {
         if (fileTabs.length > 0 && !fileTabs.some(f => f.index === activeTabKey)) {
@@ -66,18 +84,11 @@ const TabbedEditorComponent = ({
         }
     }, [fileTabs, activeTabKey]);
 
-    React.useEffect(() => {
-        if (fileTabs.length > 0) {
-            const tab = fileTabs.find(f => f.index === activeTabKey);
-            if (tab) {
-                setEditorValue(tab.content ?? "");
-                setScriptType(tab.script_language as "typescript" | "javascript");
-            }
-        }
-    }, [fileTabs, activeTabKey]);
-
     const evalueateValue = React.useCallback(async () => {
-        if (editorValue) {
+        const tab = fileTabs.find(f => f.index === activeTabKey);
+        const editorValue = tab?.content;
+        if (editorValue !== undefined && editorValue !== null) {
+            const scriptValue = editorValue;
             let script = "";
             if (scriptType === "typescript") {
                 const result = ts.transpileModule(editorValue, {
@@ -89,7 +100,7 @@ const TabbedEditorComponent = ({
                 });
                 script = result.outputText;
             } else {
-                script = editorValue;
+                script = scriptValue;
             }
             let value: string = "";
 
@@ -110,9 +121,9 @@ const TabbedEditorComponent = ({
 
             onNewOutput(value);
         }
-    }, [editorValue, onNewOutput, scriptType]);
+    }, [activeTabKey, fileTabs, onNewOutput, scriptType]);
 
-    useDebounce(evalueateValue, 1_500, [editorValue]);
+    useDebounce(evalueateValue, 1_500);
 
     return (
         <Tabs //

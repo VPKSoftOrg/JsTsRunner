@@ -25,7 +25,6 @@ SOFTWARE.
 import * as React from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Locales } from "../../localization/Localization";
-import { FileTabData } from "../../components/Types";
 
 /**
  * The software settings returned by the Tauri app.
@@ -41,10 +40,6 @@ export type Settings = {
     error: boolean;
     /** An error message if one occurred. */
     error_message: string;
-    /** The list of open files from the Tauri application state. */
-    files: FileTabData[];
-    /** The id of the previous file. */
-    previous_file_id: number;
 };
 
 /**

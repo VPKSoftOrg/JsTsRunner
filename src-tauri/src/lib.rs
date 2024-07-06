@@ -22,7 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use config::{get_app_config, set_app_config, AppConfig};
+use config::{
+    get_app_config, get_file_state, save_file_state, set_app_config, AppConfig, FileState,
+};
 use js_helpers::{
     clear_log_stack, get_log_stack, js_console_error_capture, js_console_log_capture,
     js_console_warn_capture,
@@ -52,7 +54,9 @@ pub async fn run() {
             get_app_state,
             run_script,
             save_open_tabs,
-            add_new_tab
+            add_new_tab,
+            update_open_tabs,
+            load_file_state,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -63,24 +67,39 @@ pub async fn run() {
 /// # Returns
 /// Application settings.
 #[tauri::command]
-async fn load_settings(app_state: State<'_, AppState>) -> Result<AppConfig, String> {
+async fn load_settings() -> Result<AppConfig, String> {
     let config = get_app_config();
+    Ok(config)
+}
+
+#[tauri::command]
+async fn load_file_state(app_state: State<'_, AppState>) -> Result<bool, String> {
+    let state = match get_file_state() {
+        Ok(v) => v,
+        Err(e) => {
+            return Err(e);
+        }
+    };
 
     match app_state.file_index.lock() {
         Ok(mut index) => {
-            *index = config.previous_file_id;
+            *index = state.file_index;
         }
-        Err(_) => {}
+        Err(e) => {
+            return Err(e.to_string());
+        }
     }
 
     match app_state.file_tabs.lock() {
         Ok(mut tabs) => {
-            *tabs = config.files.clone();
+            *tabs = state.files;
         }
-        Err(_) => {}
+        Err(e) => {
+            return Err(e.to_string());
+        }
     }
 
-    Ok(config)
+    Ok(true)
 }
 
 /// Saves the settings passed from the frontend.
@@ -177,11 +196,11 @@ fn v8_init() {
 
 #[tauri::command]
 async fn save_open_tabs(app_state: State<'_, AppState>) -> Result<bool, String> {
-    let mut config = get_app_config();
+    let mut config = FileState::default();
 
     match app_state.file_index.lock() {
         Ok(index) => {
-            config.previous_file_id = *index;
+            config.file_index = *index;
         }
         Err(_) => {}
     }
@@ -193,8 +212,38 @@ async fn save_open_tabs(app_state: State<'_, AppState>) -> Result<bool, String> 
         Err(_) => {}
     }
 
-    set_app_config(config);
-    Ok(true)
+    match save_file_state(config) {
+        Ok(_) => {
+            return Ok(true);
+        }
+        Err(e) => {
+            return Err(e);
+        }
+    }
+}
+
+#[tauri::command]
+async fn update_open_tabs(
+    tab_data: Vec<FileTabData>,
+    app_state: State<'_, AppState>,
+) -> Result<bool, String> {
+    match app_state.file_tabs.lock() {
+        Ok(mut tabs) => {
+            *tabs = tab_data;
+        }
+        Err(e) => {
+            return Err(e.to_string());
+        }
+    }
+
+    match save_open_tabs(app_state).await {
+        Ok(_) => {
+            return Ok(true);
+        }
+        Err(e) => {
+            return Err(e.to_string());
+        }
+    }
 }
 
 #[tauri::command]
