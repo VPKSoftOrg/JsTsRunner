@@ -69,5 +69,21 @@ const saveOpenTabs = async (): Promise<boolean> => {
     }
 };
 
-export { runScript, getAppState, addNewTab, saveOpenTabs };
+const updateOpenTabs = async (tabs: FileTabData[]): Promise<boolean> => {
+    try {
+        return await invoke("update_open_tabs", { tabData: tabs });
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
+const loadFileState = async (): Promise<boolean> => {
+    try {
+        return await invoke("load_file_state");
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
+export { runScript, getAppState, addNewTab, saveOpenTabs, updateOpenTabs, loadFileState };
 export type { AppStateResult };

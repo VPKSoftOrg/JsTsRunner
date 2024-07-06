@@ -1,7 +1,7 @@
 //@ts-expect-error - React is required for JSX
 import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDoorOpen, faGear, faInfo, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsRotate, faDoorOpen, faGear, faInfo, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { LocalizeFunction } from "../localization/Localization";
 
 import { ToolBarItem, ToolBarSeparator } from "./AppToolbar";
@@ -43,6 +43,13 @@ export const appToolbarItems = (localize?: LocalizeFunction): (ToolBarItem<MenuK
         name: "language",
     },
     "|",
+    {
+        icon: <FontAwesomeIcon icon={faArrowsRotate} />,
+        title: localize?.("convertToJs") ?? "Convert to JavaScript",
+        tooltipTitle: localize?.("convertToJs") ?? "Convert to JavaScript",
+        clickActionObject: "convertToJs",
+        type: "button",
+    },
     {
         icon: <FontAwesomeIcon icon={faPlus} />,
         title: localize?.("addNewTab") ?? "New tab",

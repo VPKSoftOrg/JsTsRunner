@@ -1,4 +1,5 @@
 {
     "updateCheckFailedFile": "File open failed with message '{{error}}'.",
-    "newFileWithIndex": "New file {{index}}"
+    "newFileWithIndex": "New file {{index}}",
+    "currentMustBeTsFile": "The current file type must be a TypeScript file in order to convert it to JavaScript."
 }

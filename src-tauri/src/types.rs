@@ -28,8 +28,11 @@ use serde::{Deserialize, Serialize};
 
 /// The application state for the Tauri application.
 pub struct AppState {
+    /// The log stack for the run script.
     pub log_stack: Mutex<Vec<String>>,
+    /// The index of the next file.
     pub file_index: Mutex<u64>,
+    /// The file tabs currently open.
     pub file_tabs: Mutex<Vec<FileTabData>>,
 }
 
@@ -44,20 +47,30 @@ impl ::std::default::Default for AppState {
     }
 }
 
-/// The application state seriazable result data.
+/// The application state serializable result data.
 #[derive(Serialize, Deserialize)]
 pub struct AppStateResult {
+    /// The log stack for the run script.
     pub log_stack: Vec<String>,
+    /// The index of the next file.
     pub file_index: u64,
+    /// The file tabs currently open.
     pub file_tabs: Vec<FileTabData>,
 }
 
+/// The file tab data for a single file.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FileTabData {
+    /// The index of the file.
     pub index: u64,
+    /// The path of the file.
     pub path: Option<String>,
+    /// The name of the file.
     pub file_name: String,
+    /// A flag indicating if the file is temporary.
     pub is_temporary: bool,
+    /// The language of the script.
     pub script_language: String,
+    /// The optional content of the file. The content can be in the file system also if the file is not temporary.
     pub content: Option<String>,
 }

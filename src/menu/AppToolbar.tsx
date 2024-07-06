@@ -95,6 +95,15 @@ const AppToolbarComponent = <T,>({
     );
 };
 
+/**
+ * Creates a single toolbar item.
+ * @param {ToolBarItem<T>} item The item to create.
+ * @param {() => void} onClick The click handler for the item.
+ * @param {(value: string, name?: string) => void} onSelectChange The select change handler for the item.
+ * @param {{[key: string]: string}} selectValues The select values for the item.
+ * @param {number} index The index of the item.
+ * @returns A single toolbar item.
+ */
 const createToolbarItem = <T,>(
     item: ToolBarItem<T>,
     onClick: (item: unknown) => void,
