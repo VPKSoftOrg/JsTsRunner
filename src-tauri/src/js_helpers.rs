@@ -26,6 +26,12 @@ use std::sync::Mutex;
 
 static mut LOG_STACK: Mutex<Vec<String>> = Mutex::new(vec![]);
 
+/// Pushes a new captured log call values to the log stack.
+///
+/// # Arguments
+/// * `scope` - The v8 scope.
+/// * `args` - The v8 arguments.
+/// * `_rv` - The v8 return value.
 pub fn js_console_log_capture(
     scope: &mut v8::HandleScope,
     args: v8::FunctionCallbackArguments,
@@ -47,6 +53,12 @@ pub fn js_console_log_capture(
     push_log_stack(format!("LOG: {}", result));
 }
 
+/// Pushes a new captured warn call values to the log stack.
+///
+/// # Arguments
+/// * `scope` - The v8 scope.
+/// * `args` - The v8 arguments.
+/// * `_rv` - The v8 return value.
 pub fn js_console_warn_capture(
     scope: &mut v8::HandleScope,
     args: v8::FunctionCallbackArguments,
@@ -67,6 +79,12 @@ pub fn js_console_warn_capture(
     push_log_stack(format!("WARN: {}", result));
 }
 
+/// Pushes a new captured error call values to the log stack.
+///
+/// # Arguments
+/// * `scope` - The v8 scope.
+/// * `args` - The v8 arguments.
+/// * `_rv` - The v8 return value.
 pub fn js_console_error_capture(
     scope: &mut v8::HandleScope,
     args: v8::FunctionCallbackArguments,
@@ -87,6 +105,10 @@ pub fn js_console_error_capture(
     push_log_stack(format!("ERROR: {}", result));
 }
 
+/// Pushes a specified value to the log stack.
+///
+/// # Arguments
+/// * `value` - The value to push.
 pub fn push_log_stack(value: String) {
     unsafe {
         match LOG_STACK.lock() {
@@ -98,6 +120,7 @@ pub fn push_log_stack(value: String) {
     }
 }
 
+/// Clears the log stack.
 pub fn clear_log_stack() {
     unsafe {
         match LOG_STACK.lock() {
@@ -109,6 +132,10 @@ pub fn clear_log_stack() {
     }
 }
 
+/// Gets the log stack.
+///
+/// # Returns
+/// The log stack as a vector of strings.
 pub fn get_log_stack() -> Vec<String> {
     unsafe {
         match LOG_STACK.lock() {

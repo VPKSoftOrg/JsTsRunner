@@ -22,5 +22,6 @@
     "programmingLanguage": "Programming language",
     "scriptType": "Script type",
     "addNewTab": "New tab",
-    "newFile": "New file"
+    "newFile": "New file",
+    "convertToJs": "Convert to JavaScript"
 }

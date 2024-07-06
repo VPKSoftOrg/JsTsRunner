@@ -22,5 +22,6 @@
     "programmingLanguage": "Ohjelmointikieli",
     "scriptType": "Skriptin tyyppi",
     "addNewTab": "Uusi välilehti",
-    "newFile": "Uusi tiedosto"
+    "newFile": "Uusi tiedosto",
+    "convertToJs": "Muunna JavaScriptiin"
 }

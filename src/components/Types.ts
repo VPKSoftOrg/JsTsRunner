@@ -8,12 +8,21 @@ type CommonProps = {
     key?: React.Key | null | undefined;
 };
 
+/**
+ * The file tab data in the Tauri application state.
+ */
 type FileTabData = {
+    /** The index of the file. */
     index: number;
+    /** The path of the file. */
     path: string | null;
+    /** The name of the file. */
     file_name: string;
+    /** A flag indicating whether the file is temporary. */
     is_temporary: boolean;
+    /** The language of the script. */
     script_language: string;
+    /** The content of the file. */
     content: string | null;
 };
 

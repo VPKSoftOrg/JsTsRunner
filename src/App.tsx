@@ -19,6 +19,7 @@ import { TabbedEditor } from "./components/app/TabbedEditor";
 import { AppStateResult, addNewTab, getAppState, loadFileState, saveOpenTabs, updateOpenTabs } from "./components/app/TauriWrappers";
 import { useNotify } from "./utilities/app/Notify";
 import { useDebounce } from "./hooks/useDebounce";
+import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
 
 type AppProps = CommonProps;
 
@@ -29,6 +30,8 @@ type AppProps = CommonProps;
  */
 const App = ({ className }: AppProps) => {
     const [contextHolder, notification] = useNotify();
+
+    // A callback for notification from useSettings hook to display an error message.
     const settingsErrorCallback = React.useCallback(
         (error: Error | string | unknown) => {
             notification("error", `${error}`);
@@ -36,20 +39,32 @@ const App = ({ className }: AppProps) => {
         [notification]
     );
 
+    // State variables.
     const [evaluationResult, setEvaluationResult] = useState("");
     const [aboutPopupVisible, setAboutPopupVisible] = React.useState(false);
     const [preferencesVisible, setPreferencesVisible] = React.useState(false);
     const [settings, settingsLoaded, updateSettings, reloadSettings] = useSettings(settingsErrorCallback);
-    const { token } = useAntdToken();
-    const { setStateSaverEnabled, restoreState } = useWindowStateSaver(10_000);
-    const { setTheme, updateBackround } = useAntdTheme();
     const [previewDarkMode, setPreviewDarkMode] = React.useState<boolean | null>(null);
     const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: string }>({ language: "javascript" });
     const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
+    const [activeTabKey, setActiveTabKey] = React.useState(0);
+
+    // Antd theme-related hooks.
+    const { token } = useAntdToken();
+    const { setTheme, updateBackround } = useAntdTheme();
+
+    // A hook for saving and restoring the window state.
+    const { setStateSaverEnabled, restoreState } = useWindowStateSaver(10_000);
+
+    // The i18n translation hook.
+    const { translate, setLocale } = useTranslate();
+
+    // Store the application's current window into a memoized variable.
     const appWindow = React.useMemo(() => getCurrent(), []);
     const indexRef = React.useRef<number>(0);
     const appStateLoaded = React.useRef<boolean>(false);
 
+    // Load the initial application state consisting of the file tabs and related data.
     React.useEffect(() => {
         if (appStateLoaded.current && !settingsLoaded) {
             return;
@@ -67,6 +82,7 @@ const App = ({ className }: AppProps) => {
             .catch(error => notification("error", error));
     }, [notification, settingsLoaded]);
 
+    // Restore the window state.
     React.useEffect(() => {
         if (settingsLoaded && settings !== null) {
             setStateSaverEnabled(settings.save_window_state);
@@ -74,8 +90,7 @@ const App = ({ className }: AppProps) => {
         }
     }, [restoreState, settingsLoaded, settings, setStateSaverEnabled]);
 
-    const { translate, setLocale } = useTranslate();
-
+    // Set the theme and locale based on the application settings.
     React.useEffect(() => {
         if (settings && setTheme) {
             void setLocale(settings.locale);
@@ -83,6 +98,7 @@ const App = ({ className }: AppProps) => {
         }
     }, [setLocale, setTheme, settings]);
 
+    // A debounced callback to save the current file tabs.
     const saveFileTabs = React.useCallback(() => {
         if (!appStateLoaded.current || !settingsLoaded) {
             return;
@@ -94,20 +110,25 @@ const App = ({ className }: AppProps) => {
             .catch(error => notification("error", error));
     }, [fileTabs, notification, settingsLoaded]);
 
+    // A debounced callback to save the current file tabs if nothing has changed in 5 seconds.
     useDebounce(saveFileTabs, 5_000);
 
+    // A callback to close the application returning always false to not to prevent the app from closing.
     const onClose = React.useCallback(() => {
         return false;
     }, []);
 
+    // A callback to to set the about popup hidden when closed.
     const aboutPopupClose = React.useCallback(() => {
         setAboutPopupVisible(false);
     }, []);
 
+    // Memoize the translated menu items.
     const menuItems = React.useMemo(() => {
         return appMenuItems(translate);
     }, [translate]);
 
+    // A callback to handle menu item and toolbar item clicks.
     const onMenuItemClick = React.useCallback(
         (key: unknown) => {
             const keyValue = key as MenuKeys;
@@ -137,14 +158,30 @@ const App = ({ className }: AppProps) => {
                         file_name: newFileName,
                     })
                         .then(() => {
-                            getAppState()
-                                .then((result: AppStateResult) => {
-                                    setFileTabs(result.file_tabs);
-                                    indexRef.current = result.file_index;
+                            saveOpenTabs()
+                                .then(() => {
+                                    getAppState()
+                                        .then((result: AppStateResult) => {
+                                            setFileTabs(result.file_tabs);
+                                            indexRef.current = result.file_index;
+                                        })
+                                        .catch(error => notification("error", error));
                                 })
                                 .catch(error => notification("error", error));
                         })
                         .catch(error => notification("error", error));
+                    break;
+                }
+                case "convertToJs": {
+                    const newTabs = [...fileTabs];
+                    const index = newTabs.findIndex(f => f.index === activeTabKey);
+                    if (index !== -1 && newTabs[index].script_language === "typescript") {
+                        newTabs[index].script_language = "javascript";
+                        newTabs[index].content = transpileTypeSctiptToJs(newTabs[index].content ?? "", true);
+                        setFileTabs(newTabs);
+                    } else {
+                        notification("info", translate("currentMustBeTsFile", "The current file type must be a TypeScript file in order to convert it to JavaScript."));
+                    }
                     break;
                 }
                 default: {
@@ -152,12 +189,16 @@ const App = ({ className }: AppProps) => {
                 }
             }
         },
-        [appWindow, notification, selectedValues, translate]
+        [activeTabKey, appWindow, fileTabs, notification, selectedValues, translate]
     );
 
+    // A callback to close the preferences popup.
     const onPreferencesClose = React.useCallback(() => {
         setPreferencesVisible(false);
+
+        // Reload the application settings.
         void reloadSettings().then(() => {
+            // Reset the theme based on the application settings.
             setPreviewDarkMode(null);
             setTheme && setTheme(settings?.dark_mode ? "dark" : "light");
         });
@@ -169,6 +210,7 @@ const App = ({ className }: AppProps) => {
         updateBackround && updateBackround(token);
     }, [token, updateBackround]);
 
+    // A callback to toggle the dark mode from the preferences popup.
     const toggleDarkMode = React.useCallback(
         (antdTheme: "light" | "dark") => {
             setTheme && setTheme(antdTheme);
@@ -177,6 +219,7 @@ const App = ({ className }: AppProps) => {
         [setTheme]
     );
 
+    // A callback to set the script evaluation result in the state.
     const onNewOutput = React.useCallback(
         (output: string) => {
             setEvaluationResult(output);
@@ -184,6 +227,7 @@ const App = ({ className }: AppProps) => {
         [setEvaluationResult]
     );
 
+    // A callback to set Select component(s) values from the tool bar into the state.
     const onSelectedValueChanged = React.useCallback(
         (value: string, name?: string) => {
             if (name) {
@@ -193,6 +237,7 @@ const App = ({ className }: AppProps) => {
         [selectedValues]
     );
 
+    // A callback to set the script language in the state when the selected tab page changed.
     const setScriptStype = React.useCallback(
         (value: ScriptType) => {
             setSelectedValues({ ...selectedValues, language: value });
@@ -200,6 +245,7 @@ const App = ({ className }: AppProps) => {
         [selectedValues]
     );
 
+    // A callback to handle the application close request event and optionally prevent the application from closing.
     React.useEffect(() => {
         const unlisten = async () =>
             await appWindow.onCloseRequested(async (/*event: CloseRequestedEvent*/) => {
@@ -213,7 +259,8 @@ const App = ({ className }: AppProps) => {
         };
     }, [appWindow]);
 
-    if (!settingsLoaded || settings === null) {
+    // Render loading indicator if the settings and app state are not loaded yet.
+    if (!settingsLoaded || settings === null || appStateLoaded.current === false) {
         return <div>Loading...</div>;
     }
 
@@ -241,10 +288,14 @@ const App = ({ className }: AppProps) => {
                         onNewOutput={onNewOutput}
                         activeTabScriptType={selectedValues["language"] as ScriptType}
                         fileTabs={fileTabs}
+                        activeTabKey={activeTabKey}
+                        setActiveTabKey={setActiveTabKey}
                         setFileTabs={setFileTabs}
                         setActiveTabScriptType={setScriptStype}
+                        saveFileTabs={saveFileTabs}
                     />
                     <div className="EditorResultContainer">
+                        Results
                         <Editor //
                             theme={previewDarkMode ?? settings.dark_mode ?? false ? "vs-dark" : "light"}
                             className="EditorResult"
@@ -295,6 +346,7 @@ const SyledApp = styled(App)`
     .EditorResultContainer {
         height: 30%;
         display: flex;
+        flex-direction: column;
         min-height: 0;
     }
 

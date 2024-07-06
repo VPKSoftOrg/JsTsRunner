@@ -3,9 +3,10 @@ import { styled } from "styled-components";
 import classNames from "classnames";
 import { Tabs } from "antd";
 import { Editor } from "@monaco-editor/react";
-import ts from "typescript";
 import { CommonProps, FileTabData, ScriptType } from "../Types";
 import { useDebounce } from "../../hooks/useDebounce";
+import { JavaScriptLogo, TypeScriptLogo } from "../../utilities/app/Images";
+import { transpileTypeSctiptToJs } from "../../utilities/app/TypeSciptTranspile";
 import { getAppState, runScript } from "./TauriWrappers";
 
 /**
@@ -15,6 +16,9 @@ type TabbedEditorProps = {
     darkMode: boolean;
     fileTabs: FileTabData[];
     activeTabScriptType: ScriptType;
+    activeTabKey: number;
+    setActiveTabKey: (value: number) => void;
+    saveFileTabs: () => void;
     setActiveTabScriptType: (scriptType: ScriptType) => void;
     setFileTabs: (fileTabs: FileTabData[]) => void;
     onNewOutput: (output: string) => void;
@@ -30,12 +34,13 @@ const TabbedEditorComponent = ({
     darkMode,
     fileTabs = [],
     activeTabScriptType,
+    activeTabKey,
+    setActiveTabKey,
+    saveFileTabs,
     setActiveTabScriptType,
     onNewOutput,
     setFileTabs,
 }: TabbedEditorProps) => {
-    const [activeTabKey, setActiveTabKey] = React.useState(0);
-
     const onTabChange = React.useCallback(
         (activeTabKey?: string) => {
             const newKey = Number.parseInt(activeTabKey ?? "0");
@@ -43,7 +48,7 @@ const TabbedEditorComponent = ({
             setActiveTabScriptType((language ?? "typescript") as ScriptType);
             setActiveTabKey(newKey);
         },
-        [fileTabs, setActiveTabScriptType]
+        [fileTabs, setActiveTabKey, setActiveTabScriptType]
     );
 
     const onEditValueChange = React.useCallback(
@@ -65,6 +70,7 @@ const TabbedEditorComponent = ({
                 key: tab.index.toString(),
                 closable: true,
                 className: "TabPane",
+                icon: <img className="IconStyle" src={tab.script_language === "typescript" ? TypeScriptLogo : JavaScriptLogo} width="16px" height="16px" />,
                 children: (
                     <Editor //
                         className="Editor"
@@ -84,7 +90,7 @@ const TabbedEditorComponent = ({
         if (fileTabs.length > 0 && !fileTabs.some(f => f.index === activeTabKey)) {
             setActiveTabKey(fileTabs[0].index);
         }
-    }, [fileTabs, activeTabKey]);
+    }, [fileTabs, activeTabKey, setActiveTabKey]);
 
     const evalueateValue = React.useCallback(async () => {
         const tab = fileTabs.find(f => f.index === activeTabKey);
@@ -93,14 +99,12 @@ const TabbedEditorComponent = ({
             const scriptValue = editorValue;
             let script = "";
             if (activeTabScriptType === "typescript") {
-                const result = ts.transpileModule(editorValue, {
-                    compilerOptions: {
-                        target: ts.ScriptTarget.ES2023,
-                        module: ts.ModuleKind.ESNext,
-                        noEmit: false,
-                    },
-                });
-                script = result.outputText;
+                try {
+                    script = transpileTypeSctiptToJs(editorValue, true);
+                } catch (error) {
+                    onNewOutput(`${error}`);
+                    return;
+                }
             } else {
                 script = scriptValue;
             }
@@ -127,6 +131,19 @@ const TabbedEditorComponent = ({
 
     useDebounce(evalueateValue, 1_500);
 
+    const onTabEdit = React.useCallback(
+        (_: unknown, action: "add" | "remove") => {
+            if (action === "remove") {
+                const newTabs = [...fileTabs];
+                const index = newTabs.findIndex(f => f.index === activeTabKey);
+                newTabs.splice(index, 1);
+                setFileTabs(newTabs);
+                saveFileTabs();
+            }
+        },
+        [activeTabKey, fileTabs, saveFileTabs, setFileTabs]
+    );
+
     return (
         <Tabs //
             className={classNames(TabbedEditor.name, className)}
@@ -134,6 +151,7 @@ const TabbedEditorComponent = ({
             type="editable-card"
             hideAdd
             onChange={onTabChange}
+            onEdit={onTabEdit}
         />
     );
 };
@@ -144,6 +162,9 @@ const TabbedEditor = styled(TabbedEditorComponent)`
     .TabPane {
         height: 100%;
         width: 100%;
+    }
+    .IconStyle {
+        vertical-align: middle;
     }
 `;
 

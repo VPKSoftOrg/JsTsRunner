@@ -31,6 +31,7 @@ impl ::std::default::Default for AppConfig {
 }
 
 impl AppConfig {
+    /// Creates a new instance of the AppConfig struct with the given error message.
     pub fn error(error: String) -> Self {
         Self {
             error: true,
@@ -40,12 +41,16 @@ impl AppConfig {
     }
 }
 
+/// The file state to be saved to a named settings file (`state`).
 #[derive(Serialize, Deserialize)]
 pub struct FileState {
+    /// The list of files that have been opened.
     pub files: Vec<FileTabData>,
+    /// The index for the next opened file.
     pub file_index: u64,
 }
 
+// The default value for the file state.
 impl ::std::default::Default for FileState {
     fn default() -> Self {
         Self {

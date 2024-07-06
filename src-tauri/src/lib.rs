@@ -40,7 +40,9 @@ mod types;
 #[tokio::main]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub async fn run() {
-    v8_init();
+    let platform = v8::new_default_platform(0, false).make_shared();
+    v8::V8::initialize_platform(platform);
+    v8::V8::initialize();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_process::init())
@@ -72,6 +74,13 @@ async fn load_settings() -> Result<AppConfig, String> {
     Ok(config)
 }
 
+/// Loads the file state requested by the frontend.
+///
+/// # Arguments
+/// `app_state` - The Tauri application state.
+///
+/// # Returns
+/// `true` if the file state was loaded successfully; Error otherwise.
 #[tauri::command]
 async fn load_file_state(app_state: State<'_, AppState>) -> Result<bool, String> {
     let state = match get_file_state() {
@@ -105,7 +114,6 @@ async fn load_file_state(app_state: State<'_, AppState>) -> Result<bool, String>
 /// Saves the settings passed from the frontend.
 ///
 /// # Arguments
-///
 /// `config` - the application configuration.
 ///
 /// # Returns
@@ -115,6 +123,14 @@ async fn save_settings(config: AppConfig) -> bool {
     set_app_config(config)
 }
 
+/// Runs the script passed from the frontend.
+///
+/// # Arguments
+/// `code` - The script code to run.
+/// `app_state` - The Tauri application state.
+///
+/// # Returns
+/// The result of the script run.
 #[tauri::command]
 async fn run_script(code: String, app_state: State<'_, AppState>) -> Result<String, String> {
     clear_log_stack();
@@ -127,6 +143,8 @@ async fn run_script(code: String, app_state: State<'_, AppState>) -> Result<Stri
     }
 
     let mut code = code.clone();
+    // The console.log(), console.warn(), and console.error() functions are not
+    // outputted anywhere, so we need to replace them with our own functions.
     code = code
         .replace("console.log(", "console_log(")
         .replace("console.warn(", "console_warn(")
@@ -140,12 +158,16 @@ async fn run_script(code: String, app_state: State<'_, AppState>) -> Result<Stri
     let scope = &mut v8::ContextScope::new(scope, context);
 
     let object_template = v8::ObjectTemplate::new(scope);
+
+    // Bind the console.log() function to a custom capture function which will update the data into the Tauri application state.
     let function_template = v8::FunctionTemplate::new(scope, js_console_log_capture);
     let name = v8::String::new(scope, "console_log").unwrap();
     object_template.set(name.into(), function_template.into());
+    // Bind the console.warn() function to a custom capture function which will update the data into the Tauri application state.
     let function_template = v8::FunctionTemplate::new(scope, js_console_warn_capture);
     let name = v8::String::new(scope, "console_warn").unwrap();
     object_template.set(name.into(), function_template.into());
+    // Bind the console.error() function to a custom capture function which will update the data into the Tauri application state.
     let function_template = v8::FunctionTemplate::new(scope, js_console_error_capture);
     let name = v8::String::new(scope, "console_error").unwrap();
     object_template.set(name.into(), function_template.into());
@@ -157,27 +179,27 @@ async fn run_script(code: String, app_state: State<'_, AppState>) -> Result<Stri
     let source = match v8::String::new(scope, code) {
         Some(source) => source,
         None => {
-            return Err("Error: Failed to compile script.".to_string());
+            return Err("Failed to create script.".to_string());
         }
     };
 
     let script = match v8::Script::compile(scope, source, None) {
         Some(script) => script,
         None => {
-            return Err("Error: Failed to compile script.".to_string());
+            return Err("Failed to compile script.".to_string());
         }
     };
 
     let result = match script.run(scope) {
         Some(result) => result,
         None => {
-            return Err("Error: Failed to run script.".to_string());
+            return Err("Failed to run script.".to_string());
         }
     };
 
     let result = match result.to_string(scope) {
         Some(result) => result.to_rust_string_lossy(scope),
-        None => "Error: Failed to convert compiled script and results to string.".to_string(),
+        None => "Failed to convert compiled script and results to string.".to_string(),
     };
 
     match app_state.log_stack.lock() {
@@ -188,12 +210,13 @@ async fn run_script(code: String, app_state: State<'_, AppState>) -> Result<Stri
     Ok(result)
 }
 
-fn v8_init() {
-    let platform = v8::new_default_platform(0, false).make_shared();
-    v8::V8::initialize_platform(platform);
-    v8::V8::initialize();
-}
-
+/// Saves the open tabs from the application state to a separate config file.
+///
+/// # Arguments
+/// `app_state` - The Tauri application state.
+///
+/// # Returns
+/// `true` if the open tabs were saved successfully; Error otherwise.
 #[tauri::command]
 async fn save_open_tabs(app_state: State<'_, AppState>) -> Result<bool, String> {
     let mut config = FileState::default();
@@ -222,6 +245,14 @@ async fn save_open_tabs(app_state: State<'_, AppState>) -> Result<bool, String> 
     }
 }
 
+/// Updates the open tabs into the application state.
+///
+/// # Arguments
+/// `tab_data` - The updated open tabs.
+/// `app_state` - The Tauri application state.
+///
+/// # Returns
+/// `true` if the open tabs were updated successfully; Error otherwise.
 #[tauri::command]
 async fn update_open_tabs(
     tab_data: Vec<FileTabData>,
@@ -246,6 +277,14 @@ async fn update_open_tabs(
     }
 }
 
+/// Adds a new tab into the application state.
+///
+/// # Arguments
+/// `tab_data` - The new tab data.
+/// `app_state` - The Tauri application state.
+///
+/// # Returns
+/// `true` if the new tab was added successfully; Error otherwise.
 #[tauri::command]
 async fn add_new_tab(
     tab_data: FileTabData,
@@ -279,6 +318,13 @@ async fn add_new_tab(
     Ok(true)
 }
 
+/// Returns the open tabs from the application state.
+///
+/// # Arguments
+/// `app_state` - The Tauri application state.
+///
+/// # Returns
+/// `Vec<FileTabData>` if the open tabs were returned successfully; Error otherwise.
 #[tauri::command]
 async fn get_app_state(app_state: State<'_, AppState>) -> Result<AppStateResult, String> {
     let file_tabs = match app_state.file_tabs.lock() {
