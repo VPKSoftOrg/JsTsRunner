@@ -13,7 +13,7 @@ import { PreferencesPopup } from "./components/popups/PreferencesPopup";
 import { useSettings } from "./utilities/app/Settings";
 import { useWindowStateSaver } from "./hooks/UseWindowStateListener";
 import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
-import { CommonProps, FileTabData } from "./components/Types";
+import { CommonProps, FileTabData, ScriptType } from "./components/Types";
 import { AppMenuToolbar } from "./menu/AppMenuToolbar";
 import { TabbedEditor } from "./components/app/TabbedEditor";
 import { AppStateResult, addNewTab, getAppState, loadFileState, saveOpenTabs, updateOpenTabs } from "./components/app/TauriWrappers";
@@ -232,7 +232,7 @@ const App = ({ className }: AppProps) => {
                     <TabbedEditor //
                         darkMode={previewDarkMode ?? settings.dark_mode ?? false}
                         onNewOutput={onNewOutput}
-                        activeTabScriptType={selectedValues["language"] as "typescript" | "javascript"}
+                        activeTabScriptType={selectedValues["language"] as ScriptType}
                         fileTabs={fileTabs}
                         setFileTabs={setFileTabs}
                     />

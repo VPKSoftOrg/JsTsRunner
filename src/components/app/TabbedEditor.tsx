@@ -4,7 +4,7 @@ import classNames from "classnames";
 import { Tabs } from "antd";
 import { Editor } from "@monaco-editor/react";
 import ts from "typescript";
-import { CommonProps, FileTabData } from "../Types";
+import { CommonProps, FileTabData, ScriptType } from "../Types";
 import { useDebounce } from "../../hooks/useDebounce";
 import { getAppState, runScript } from "./TauriWrappers";
 
@@ -13,7 +13,7 @@ import { getAppState, runScript } from "./TauriWrappers";
  */
 type TabbedEditorProps = {
     darkMode: boolean;
-    activeTabScriptType: "typescript" | "javascript";
+    activeTabScriptType: ScriptType;
     fileTabs: FileTabData[];
     setFileTabs: (fileTabs: FileTabData[]) => void;
     onNewOutput: (output: string) => void;
@@ -32,13 +32,13 @@ const TabbedEditorComponent = ({
     setFileTabs,
 }: TabbedEditorProps) => {
     const [activeTabKey, setActiveTabKey] = React.useState(0);
-    const [scriptType, setScriptType] = React.useState<"typescript" | "javascript">("typescript");
+    const [scriptType, setScriptType] = React.useState<ScriptType>("typescript");
 
     const onTabChange = React.useCallback(
         (activeTabKey?: string) => {
             const newKey = Number.parseInt(activeTabKey ?? "0");
             const language = fileTabs.find(f => f.index === newKey)?.script_language;
-            setScriptType((language ?? "typescript") as "typescript" | "javascript");
+            setScriptType((language ?? "typescript") as ScriptType);
             setActiveTabKey(newKey);
         },
         [fileTabs]

@@ -17,4 +17,6 @@ type FileTabData = {
     content: string | null;
 };
 
-export type { CommonProps, FileTabData };
+type ScriptType = "typescript" | "javascript";
+
+export type { CommonProps, FileTabData, ScriptType };
