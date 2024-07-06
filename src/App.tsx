@@ -193,6 +193,13 @@ const App = ({ className }: AppProps) => {
         [selectedValues]
     );
 
+    const setScriptStype = React.useCallback(
+        (value: ScriptType) => {
+            setSelectedValues({ ...selectedValues, language: value });
+        },
+        [selectedValues]
+    );
+
     React.useEffect(() => {
         const unlisten = async () =>
             await appWindow.onCloseRequested(async (/*event: CloseRequestedEvent*/) => {
@@ -235,6 +242,7 @@ const App = ({ className }: AppProps) => {
                         activeTabScriptType={selectedValues["language"] as ScriptType}
                         fileTabs={fileTabs}
                         setFileTabs={setFileTabs}
+                        setActiveTabScriptType={setScriptStype}
                     />
                     <div className="EditorResultContainer">
                         <Editor //

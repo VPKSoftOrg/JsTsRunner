@@ -13,8 +13,9 @@ import { getAppState, runScript } from "./TauriWrappers";
  */
 type TabbedEditorProps = {
     darkMode: boolean;
-    activeTabScriptType: ScriptType;
     fileTabs: FileTabData[];
+    activeTabScriptType: ScriptType;
+    setActiveTabScriptType: (scriptType: ScriptType) => void;
     setFileTabs: (fileTabs: FileTabData[]) => void;
     onNewOutput: (output: string) => void;
 } & CommonProps;
@@ -28,20 +29,21 @@ const TabbedEditorComponent = ({
     className, //
     darkMode,
     fileTabs = [],
+    activeTabScriptType,
+    setActiveTabScriptType,
     onNewOutput,
     setFileTabs,
 }: TabbedEditorProps) => {
     const [activeTabKey, setActiveTabKey] = React.useState(0);
-    const [scriptType, setScriptType] = React.useState<ScriptType>("typescript");
 
     const onTabChange = React.useCallback(
         (activeTabKey?: string) => {
             const newKey = Number.parseInt(activeTabKey ?? "0");
             const language = fileTabs.find(f => f.index === newKey)?.script_language;
-            setScriptType((language ?? "typescript") as ScriptType);
+            setActiveTabScriptType((language ?? "typescript") as ScriptType);
             setActiveTabKey(newKey);
         },
-        [fileTabs]
+        [fileTabs, setActiveTabScriptType]
     );
 
     const onEditValueChange = React.useCallback(
@@ -90,7 +92,7 @@ const TabbedEditorComponent = ({
         if (editorValue !== undefined && editorValue !== null) {
             const scriptValue = editorValue;
             let script = "";
-            if (scriptType === "typescript") {
+            if (activeTabScriptType === "typescript") {
                 const result = ts.transpileModule(editorValue, {
                     compilerOptions: {
                         target: ts.ScriptTarget.ES2023,
@@ -121,7 +123,7 @@ const TabbedEditorComponent = ({
 
             onNewOutput(value);
         }
-    }, [activeTabKey, fileTabs, onNewOutput, scriptType]);
+    }, [activeTabKey, activeTabScriptType, fileTabs, onNewOutput]);
 
     useDebounce(evalueateValue, 1_500);
 
