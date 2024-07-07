@@ -27,19 +27,19 @@ import { styled } from "styled-components";
 import classNames from "classnames";
 import { CommonProps } from "../components/Types";
 import { useTranslate } from "../localization/Localization";
-import { AppMenu, MenuItems } from "./AppMenu";
+import { AppMenu } from "./AppMenu";
 import { AppToolbar } from "./AppToolbar";
-import { MenuKeys } from "./MenuItems";
-import { appToolbarItems } from "./ToolbarItems";
+import { appMenuItems, MenuKeys } from "./MenuItems";
+import { appToolbarItems, ToolBarItems } from "./ToolbarItems";
 
 /**
  * The props for the {@link AppMenuToolbar} component.
  */
 type AppMenuToolbarProps = {
-    menuItems: MenuItems;
     selectValues: {
         [key: string]: string;
     };
+    disabledItems?: (MenuKeys | ToolBarItems)[];
     onItemClick: (key: MenuKeys) => void;
     onSelectChange(value: string, name?: string): void;
 } & CommonProps;
@@ -51,8 +51,8 @@ type AppMenuToolbarProps = {
  */
 const AppMenuToolbarComponent = ({
     className, //
-    menuItems,
     selectValues,
+    disabledItems,
     onItemClick,
     onSelectChange,
 }: AppMenuToolbarProps) => {
@@ -70,11 +70,11 @@ const AppMenuToolbarComponent = ({
             className={classNames(AppMenuToolbar.name, className)}
         >
             <AppMenu //
-                items={menuItems}
+                items={appMenuItems(translate, disabledItems as MenuKeys[] | undefined)}
                 onItemClick={onToolbarItemInternal}
             />
             <AppToolbar //
-                toolBarItems={appToolbarItems(translate)}
+                toolBarItems={appToolbarItems(translate, disabledItems)}
                 onItemClick={onToolbarItemInternal}
                 onSelectChange={onSelectChange}
                 selectValues={selectValues}

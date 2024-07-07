@@ -36,6 +36,7 @@ type TooltipObjectButtonProps<T> = {
     objectData: T;
     children?: React.ReactNode;
     tooltipTitle: string;
+    disabled?: boolean;
     onClick: (objectData: T) => void;
 } & CommonProps;
 
@@ -51,6 +52,7 @@ const TooltipObjectButtonPropsComponent = <T,>({
     children,
     tooltipTitle,
     key,
+    disabled = false,
     onClick,
 }: TooltipObjectButtonProps<T>) => {
     const onClickCallback = React.useCallback(() => {
@@ -63,6 +65,7 @@ const TooltipObjectButtonPropsComponent = <T,>({
                 className={classNames(TooltipObjectButton.name, className)}
                 onClick={onClickCallback}
                 icon={icon}
+                disabled={disabled}
             >
                 {children}
             </Button>

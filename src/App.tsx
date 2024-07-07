@@ -20,6 +20,7 @@ import { AppStateResult, addNewTab, getAppState, getNewTabId, loadFileState, sav
 import { useNotify } from "./utilities/app/Notify";
 import { useDebounce } from "./hooks/useDebounce";
 import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
+import { ToolBarItems } from "./menu/ToolbarItems";
 
 type AppProps = CommonProps;
 
@@ -48,6 +49,7 @@ const App = ({ className }: AppProps) => {
     const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: string }>({ language: "javascript" });
     const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
     const [activeTabKey, setActiveTabKey] = React.useState(0);
+    const [disabledItems, setDisabledItems] = React.useState<(MenuKeys | ToolBarItems)[]>([]);
 
     // Antd theme-related hooks.
     const { token } = useAntdToken();
@@ -79,6 +81,18 @@ const App = ({ className }: AppProps) => {
             })
             .catch(error => notification("error", error));
     }, [notification, settingsLoaded]);
+
+    // Disable the "Convert to JavaScript" menu item if the currently selected file is not a JavaScript file.
+    React.useEffect(() => {
+        const tabScript = fileTabs.find(tab => tab.uid === activeTabKey)?.script_language;
+        if (tabScript === "typescript") {
+            setDisabledItems(f => f.filter(item => item !== "convertToJs"));
+        } else {
+            setDisabledItems(f => [...f, "convertToJs"]);
+        }
+    }, [fileTabs, activeTabKey]);
+
+    console.log(disabledItems);
 
     // Restore the window state.
     React.useEffect(() => {
@@ -120,11 +134,6 @@ const App = ({ className }: AppProps) => {
     const aboutPopupClose = React.useCallback(() => {
         setAboutPopupVisible(false);
     }, []);
-
-    // Memoize the translated menu items.
-    const menuItems = React.useMemo(() => {
-        return appMenuItems(translate);
-    }, [translate]);
 
     // A callback to handle menu item and toolbar item clicks.
     const onMenuItemClick = React.useCallback(
@@ -278,10 +287,10 @@ const App = ({ className }: AppProps) => {
                 closeTitle={translate("close")}
             />
             <AppMenuToolbar //
-                menuItems={menuItems}
                 onItemClick={onMenuItemClick}
                 selectValues={selectedValues}
                 onSelectChange={onSelectedValueChanged}
+                disabledItems={disabledItems}
             />
             <div className={classNames(App.name, className)}>
                 <div id="mainView" className="App-itemsView">
@@ -297,7 +306,7 @@ const App = ({ className }: AppProps) => {
                         saveFileTabs={saveFileTabs}
                     />
                     <div className="EditorResultContainer">
-                        Results
+                        {translate("result", "Result")}
                         <Editor //
                             theme={previewDarkMode ?? settings.dark_mode ?? false ? "vs-dark" : "light"}
                             className="EditorResult"

@@ -5,16 +5,18 @@ import { faFile, faDoorOpen, faCircleQuestion, faInfo, faGear } from "@fortaweso
 import { LocalizeFunction } from "../localization/Localization";
 import { MenuItems } from "./AppMenu";
 
-export const appMenuItems = (localize?: LocalizeFunction): MenuItems => [
+export const appMenuItems = (localize?: LocalizeFunction, disabledItems?: MenuKeys[]): MenuItems => [
     {
         key: "fileMenu",
         label: localize?.("fileMenu") ?? "File",
         icon: <FontAwesomeIcon icon={faFile} />,
+        disabled: disabledItems?.includes("fileMenu"),
         children: [
             {
                 key: "preferencesMenu",
                 label: localize?.("preferences") ?? "Preferences",
                 icon: <FontAwesomeIcon icon={faGear} />,
+                disabled: disabledItems?.includes("preferencesMenu"),
             },
             {
                 type: "divider",
@@ -23,6 +25,7 @@ export const appMenuItems = (localize?: LocalizeFunction): MenuItems => [
                 key: "exitMenu",
                 label: localize?.("exitMenu") ?? "Exit",
                 icon: <FontAwesomeIcon icon={faDoorOpen} />,
+                disabled: disabledItems?.includes("exitMenu"),
             },
         ],
     },
@@ -30,11 +33,13 @@ export const appMenuItems = (localize?: LocalizeFunction): MenuItems => [
         key: "helpMenu",
         label: localize?.("helpMenu") ?? "Help",
         icon: <FontAwesomeIcon icon={faCircleQuestion} />,
+        disabled: disabledItems?.includes("helpMenu"),
         children: [
             {
                 key: "aboutMenu",
                 label: localize?.("aboutMenu") ?? "About",
                 icon: <FontAwesomeIcon icon={faInfo} />,
+                disabled: disabledItems?.includes("aboutMenu"),
             },
         ],
     },

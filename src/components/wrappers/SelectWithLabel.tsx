@@ -39,6 +39,7 @@ type SelectWithLabelProps = {
     name?: string;
     value: string;
     width?: string;
+    disabled?: boolean;
     valueChanged: (value: string, name?: string) => void;
 } & CommonProps;
 
@@ -55,6 +56,7 @@ const SelectWithLabelComponent = ({
     label,
     value,
     key,
+    disabled,
     valueChanged,
 }: SelectWithLabelProps) => {
     const defaultValue = React.useMemo(() => options?.[0]?.value, [options]);
@@ -79,6 +81,7 @@ const SelectWithLabelComponent = ({
                 value={value}
                 onSelect={onSelect}
                 defaultValue={defaultValue}
+                disabled={disabled}
             />
         </div>
     );

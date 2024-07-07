@@ -39,6 +39,7 @@ export type ToolBarItem<T> = {
     options?: { value: string; label: string }[] | undefined;
     fieldNames?: FieldNames | undefined;
     name?: string;
+    disabled?: boolean;
 };
 
 export type ToolBarSeparator = "|";
@@ -119,6 +120,7 @@ const createToolbarItem = <T,>(
                 objectData={item.clickActionObject}
                 onClick={onClick}
                 key={index}
+                disabled={item.disabled}
             />
         );
     }
@@ -133,6 +135,7 @@ const createToolbarItem = <T,>(
                 name={item.name}
                 value={selectValues[item.name]}
                 key={index}
+                disabled={item.disabled}
             />
         );
     }
