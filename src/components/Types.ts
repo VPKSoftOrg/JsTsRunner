@@ -12,8 +12,8 @@ type CommonProps = {
  * The file tab data in the Tauri application state.
  */
 type FileTabData = {
-    /** The index of the file. */
-    index: number;
+    /** The unique identifier. */
+    uid: number;
     /** The path of the file. */
     path: string | null;
     /** The name of the file. */

@@ -31,11 +31,13 @@ use js_helpers::{
 };
 use tauri::State;
 use types::{AppState, AppStateResult, FileTabData};
+use utils::first_missing_in_sequence;
 use v8;
 
 mod config;
 mod js_helpers;
 mod types;
+mod utils;
 
 #[tokio::main]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -59,6 +61,7 @@ pub async fn run() {
             add_new_tab,
             update_open_tabs,
             load_file_state,
+            get_new_tab_id,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -90,9 +93,9 @@ async fn load_file_state(app_state: State<'_, AppState>) -> Result<bool, String>
         }
     };
 
-    match app_state.file_index.lock() {
-        Ok(mut index) => {
-            *index = state.file_index;
+    match app_state.file_ids.lock() {
+        Ok(mut ids) => {
+            *ids = state.file_ids;
         }
         Err(e) => {
             return Err(e.to_string());
@@ -221,9 +224,9 @@ async fn run_script(code: String, app_state: State<'_, AppState>) -> Result<Stri
 async fn save_open_tabs(app_state: State<'_, AppState>) -> Result<bool, String> {
     let mut config = FileState::default();
 
-    match app_state.file_index.lock() {
-        Ok(index) => {
-            config.file_index = *index;
+    match app_state.file_ids.lock() {
+        Ok(ids) => {
+            config.file_ids = ids.clone();
         }
         Err(_) => {}
     }
@@ -258,6 +261,12 @@ async fn update_open_tabs(
     tab_data: Vec<FileTabData>,
     app_state: State<'_, AppState>,
 ) -> Result<bool, String> {
+    let mut new_ids: Vec<i32> = vec![];
+
+    for tab in &tab_data {
+        new_ids.push(tab.uid);
+    }
+
     match app_state.file_tabs.lock() {
         Ok(mut tabs) => {
             *tabs = tab_data;
@@ -267,9 +276,39 @@ async fn update_open_tabs(
         }
     }
 
+    match app_state.file_ids.lock() {
+        Ok(mut ids) => {
+            *ids = new_ids;
+        }
+        Err(e) => {
+            return Err(e.to_string());
+        }
+    }
+
     match save_open_tabs(app_state).await {
         Ok(_) => {
             return Ok(true);
+        }
+        Err(e) => {
+            return Err(e.to_string());
+        }
+    }
+}
+
+/// Gets the new tab unique id from the application state.
+///
+/// # Arguments
+/// `app_state` - The Tauri application state.
+///
+/// # Returns
+/// The new tab unique id.
+#[tauri::command]
+async fn get_new_tab_id(app_state: State<'_, AppState>) -> Result<i32, String> {
+    match app_state.file_ids.lock() {
+        Ok(ids) => {
+            let new_ids: Vec<i32> = ids.clone();
+            let new_id = first_missing_in_sequence(&new_ids);
+            return Ok(new_id);
         }
         Err(e) => {
             return Err(e.to_string());
@@ -292,10 +331,14 @@ async fn add_new_tab(
 ) -> Result<bool, String> {
     let mut tab_data = tab_data;
 
-    match app_state.file_index.lock() {
-        Ok(mut index) => {
-            *index = *index + 1;
-            tab_data.index = *index;
+    match app_state.file_ids.lock() {
+        Ok(mut ids) => {
+            let mut new_ids: Vec<i32> = ids.clone();
+
+            let new_id = first_missing_in_sequence(&new_ids);
+            new_ids.push(new_id);
+            *ids = new_ids;
+            tab_data.uid = new_id;
         }
         Err(e) => {
             return Err(e.to_string());
@@ -337,10 +380,10 @@ async fn get_app_state(app_state: State<'_, AppState>) -> Result<AppStateResult,
         }
     };
 
-    let file_index = match app_state.file_index.lock() {
-        Ok(index) => {
-            let file_index = *index;
-            file_index
+    let file_ids = match app_state.file_ids.lock() {
+        Ok(ids) => {
+            let file_ids = ids.clone();
+            file_ids
         }
         Err(_) => {
             return Err("Error: Failed to get application state.".to_string());
@@ -353,7 +396,7 @@ async fn get_app_state(app_state: State<'_, AppState>) -> Result<AppStateResult,
             return Ok(AppStateResult {
                 log_stack,
                 file_tabs,
-                file_index,
+                file_ids,
             });
         }
         Err(_) => {

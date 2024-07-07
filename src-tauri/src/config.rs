@@ -47,7 +47,7 @@ pub struct FileState {
     /// The list of files that have been opened.
     pub files: Vec<FileTabData>,
     /// The index for the next opened file.
-    pub file_index: u64,
+    pub file_ids: Vec<i32>,
 }
 
 // The default value for the file state.
@@ -55,7 +55,7 @@ impl ::std::default::Default for FileState {
     fn default() -> Self {
         Self {
             files: vec![],
-            file_index: 0,
+            file_ids: vec![],
         }
     }
 }

@@ -27,7 +27,7 @@ import { FileTabData } from "../Types";
 
 type AppStateResult = {
     log_stack: string[];
-    file_index: number;
+    file_ids: number[];
     file_tabs: FileTabData[];
 };
 
@@ -45,6 +45,11 @@ const runScript = async (code: string): Promise<string> => {
     }
 };
 
+/**
+ * Gets the application state from the Tauri API.
+ * @returns {Promise<AppStateResult>} The application state.
+ * @throws {Error} If the Tauri API call fails.
+ */
 const getAppState = async (): Promise<AppStateResult> => {
     try {
         return await invoke("get_app_state");
@@ -53,6 +58,12 @@ const getAppState = async (): Promise<AppStateResult> => {
     }
 };
 
+/**
+ * Adds a new tab to the application.
+ * @param {FileTabData} tab_data - The tab data to add.
+ * @returns {Promise<boolean>} A value indicating whether the tab was added successfully.
+ * @throws {Error} If the Tauri API call fails.
+ */
 const addNewTab = async (tab_data: FileTabData) => {
     try {
         return await invoke("add_new_tab", { tabData: tab_data });
@@ -61,6 +72,11 @@ const addNewTab = async (tab_data: FileTabData) => {
     }
 };
 
+/**
+ * Saves the open tabs using the Tauri API call.
+ * @returns {Promise<boolean>} A value indicating whether the tabs were saved successfully.
+ * @throws {Error} If the Tauri API call fails.
+ */
 const saveOpenTabs = async (): Promise<boolean> => {
     try {
         return await invoke("save_open_tabs");
@@ -69,6 +85,12 @@ const saveOpenTabs = async (): Promise<boolean> => {
     }
 };
 
+/**
+ * Updates the open tabs using the Tauri API call.
+ * @param {FileTabData[]} tabs - The tabs to update.
+ * @returns {Promise<boolean>} A value indicating whether the tabs were updated successfully.
+ * @throws {Error} If the Tauri API call fails.
+ */
 const updateOpenTabs = async (tabs: FileTabData[]): Promise<boolean> => {
     try {
         return await invoke("update_open_tabs", { tabData: tabs });
@@ -77,6 +99,11 @@ const updateOpenTabs = async (tabs: FileTabData[]): Promise<boolean> => {
     }
 };
 
+/**
+ * Loads the file state using the Tauri API call into the Rust backend state.
+ * @returns {Promise<boolean>} A value indicating whether the file state was loaded successfully.
+ * @throws {Error} If the Tauri API call fails.
+ */
 const loadFileState = async (): Promise<boolean> => {
     try {
         return await invoke("load_file_state");
@@ -85,5 +112,18 @@ const loadFileState = async (): Promise<boolean> => {
     }
 };
 
-export { runScript, getAppState, addNewTab, saveOpenTabs, updateOpenTabs, loadFileState };
+/**
+ * Gets a new tab unique id using the Tauri API call.
+ * @returns {Promise<number>} The new tab unique id.
+ * @throws {Error} If the Tauri API call fails.
+ */
+const getNewTabId = async (): Promise<number> => {
+    try {
+        return await invoke("get_new_tab_id");
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
+export { runScript, getAppState, addNewTab, saveOpenTabs, updateOpenTabs, loadFileState, getNewTabId };
 export type { AppStateResult };

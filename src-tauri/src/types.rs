@@ -31,7 +31,7 @@ pub struct AppState {
     /// The log stack for the run script.
     pub log_stack: Mutex<Vec<String>>,
     /// The index of the next file.
-    pub file_index: Mutex<u64>,
+    pub file_ids: Mutex<Vec<i32>>,
     /// The file tabs currently open.
     pub file_tabs: Mutex<Vec<FileTabData>>,
 }
@@ -41,7 +41,7 @@ impl ::std::default::Default for AppState {
     fn default() -> Self {
         Self {
             log_stack: Mutex::new(vec![]),
-            file_index: Mutex::new(0),
+            file_ids: Mutex::new(vec![]),
             file_tabs: Mutex::new(vec![]),
         }
     }
@@ -53,7 +53,7 @@ pub struct AppStateResult {
     /// The log stack for the run script.
     pub log_stack: Vec<String>,
     /// The index of the next file.
-    pub file_index: u64,
+    pub file_ids: Vec<i32>,
     /// The file tabs currently open.
     pub file_tabs: Vec<FileTabData>,
 }
@@ -61,8 +61,8 @@ pub struct AppStateResult {
 /// The file tab data for a single file.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FileTabData {
-    /// The index of the file.
-    pub index: u64,
+    /// The unique id of the file.
+    pub uid: i32,
     /// The path of the file.
     pub path: Option<String>,
     /// The name of the file.

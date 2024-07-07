@@ -16,7 +16,7 @@ import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
 import { CommonProps, FileTabData, ScriptType } from "./components/Types";
 import { AppMenuToolbar } from "./menu/AppMenuToolbar";
 import { TabbedEditor } from "./components/app/TabbedEditor";
-import { AppStateResult, addNewTab, getAppState, loadFileState, saveOpenTabs, updateOpenTabs } from "./components/app/TauriWrappers";
+import { AppStateResult, addNewTab, getAppState, getNewTabId, loadFileState, saveOpenTabs, updateOpenTabs } from "./components/app/TauriWrappers";
 import { useNotify } from "./utilities/app/Notify";
 import { useDebounce } from "./hooks/useDebounce";
 import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
@@ -61,7 +61,6 @@ const App = ({ className }: AppProps) => {
 
     // Store the application's current window into a memoized variable.
     const appWindow = React.useMemo(() => getCurrent(), []);
-    const indexRef = React.useRef<number>(0);
     const appStateLoaded = React.useRef<boolean>(false);
 
     // Load the initial application state consisting of the file tabs and related data.
@@ -74,7 +73,6 @@ const App = ({ className }: AppProps) => {
                 getAppState()
                     .then((result: AppStateResult) => {
                         setFileTabs(result.file_tabs);
-                        indexRef.current = result.file_index;
                         appStateLoaded.current = true;
                     })
                     .catch(error => notification("error", error));
@@ -111,7 +109,7 @@ const App = ({ className }: AppProps) => {
     }, [fileTabs, notification, settingsLoaded]);
 
     // A debounced callback to save the current file tabs if nothing has changed in 5 seconds.
-    useDebounce(saveFileTabs, 5_000);
+    useDebounce(saveFileTabs, 5_000); // TODO::Make this configurable
 
     // A callback to close the application returning always false to not to prevent the app from closing.
     const onClose = React.useCallback(() => {
@@ -146,35 +144,39 @@ const App = ({ className }: AppProps) => {
                     break;
                 }
                 case "addNewTab": {
-                    let newFileName = translate("newFileWithIndex", "New file {{index}}", { index: indexRef.current + 1 });
-                    newFileName += selectedValues["language"] === "typescript" ? ".ts" : ".js";
+                    getNewTabId()
+                        .then(uid => {
+                            let newFileName = translate("newFileWithIndex", "New file {{index}}", { index: uid });
+                            newFileName += selectedValues["language"] === "typescript" ? ".ts" : ".js";
 
-                    void addNewTab({
-                        index: 0,
-                        path: null,
-                        is_temporary: true,
-                        script_language: selectedValues["language"],
-                        content: null,
-                        file_name: newFileName,
-                    })
-                        .then(() => {
-                            saveOpenTabs()
+                            void addNewTab({
+                                uid: 0,
+                                path: null,
+                                is_temporary: true,
+                                script_language: selectedValues["language"],
+                                content: null,
+                                file_name: newFileName,
+                            })
                                 .then(() => {
-                                    getAppState()
-                                        .then((result: AppStateResult) => {
-                                            setFileTabs(result.file_tabs);
-                                            indexRef.current = result.file_index;
+                                    saveOpenTabs()
+                                        .then(() => {
+                                            getAppState()
+                                                .then((result: AppStateResult) => {
+                                                    setFileTabs(result.file_tabs);
+                                                })
+                                                .catch(error => notification("error", error));
                                         })
                                         .catch(error => notification("error", error));
                                 })
                                 .catch(error => notification("error", error));
                         })
                         .catch(error => notification("error", error));
+
                     break;
                 }
                 case "convertToJs": {
                     const newTabs = [...fileTabs];
-                    const index = newTabs.findIndex(f => f.index === activeTabKey);
+                    const index = newTabs.findIndex(f => f.uid === activeTabKey);
                     if (index !== -1 && newTabs[index].script_language === "typescript") {
                         newTabs[index].script_language = "javascript";
                         newTabs[index].content = transpileTypeSctiptToJs(newTabs[index].content ?? "", true);
