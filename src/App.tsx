@@ -5,9 +5,10 @@ import { Editor } from "@monaco-editor/react";
 import "./App.css";
 import classNames from "classnames";
 import { getCurrent } from "@tauri-apps/api/window";
+import { open } from "@tauri-apps/plugin-dialog";
 import { StyledTitle } from "./components/app/WindowTitle";
 import { useTranslate } from "./localization/Localization";
-import { MenuKeys, appMenuItems } from "./menu/MenuItems";
+import { MenuKeys } from "./menu/MenuItems";
 import { AboutPopup } from "./components/popups/AboutPopup";
 import { PreferencesPopup } from "./components/popups/PreferencesPopup";
 import { useSettings } from "./utilities/app/Settings";
@@ -16,10 +17,11 @@ import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
 import { CommonProps, FileTabData, ScriptType } from "./components/Types";
 import { AppMenuToolbar } from "./menu/AppMenuToolbar";
 import { TabbedEditor } from "./components/app/TabbedEditor";
-import { AppStateResult, addNewTab, getAppState, loadFileState, saveOpenTabs, updateOpenTabs } from "./components/app/TauriWrappers";
+import { AppStateResult, addNewTab, getAppState, getNewTabId, loadFileState, openExistingFile, saveOpenTabs, updateOpenTabs } from "./components/app/TauriWrappers";
 import { useNotify } from "./utilities/app/Notify";
 import { useDebounce } from "./hooks/useDebounce";
 import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
+import { ToolBarItems } from "./menu/ToolbarItems";
 
 type AppProps = CommonProps;
 
@@ -48,6 +50,7 @@ const App = ({ className }: AppProps) => {
     const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: string }>({ language: "javascript" });
     const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
     const [activeTabKey, setActiveTabKey] = React.useState(0);
+    const [disabledItems, setDisabledItems] = React.useState<(MenuKeys | ToolBarItems)[]>([]);
 
     // Antd theme-related hooks.
     const { token } = useAntdToken();
@@ -61,7 +64,6 @@ const App = ({ className }: AppProps) => {
 
     // Store the application's current window into a memoized variable.
     const appWindow = React.useMemo(() => getCurrent(), []);
-    const indexRef = React.useRef<number>(0);
     const appStateLoaded = React.useRef<boolean>(false);
 
     // Load the initial application state consisting of the file tabs and related data.
@@ -74,13 +76,22 @@ const App = ({ className }: AppProps) => {
                 getAppState()
                     .then((result: AppStateResult) => {
                         setFileTabs(result.file_tabs);
-                        indexRef.current = result.file_index;
                         appStateLoaded.current = true;
                     })
                     .catch(error => notification("error", error));
             })
             .catch(error => notification("error", error));
     }, [notification, settingsLoaded]);
+
+    // Disable the "Convert to JavaScript" menu item if the currently selected file is not a JavaScript file.
+    React.useEffect(() => {
+        const tabScript = fileTabs.find(tab => tab.uid === activeTabKey)?.script_language;
+        if (tabScript === "typescript") {
+            setDisabledItems(f => f.filter(item => item !== "convertToJs"));
+        } else {
+            setDisabledItems(f => (f.includes("convertToJs") ? f : [...f, "convertToJs"]));
+        }
+    }, [fileTabs, activeTabKey]);
 
     // Restore the window state.
     React.useEffect(() => {
@@ -111,7 +122,7 @@ const App = ({ className }: AppProps) => {
     }, [fileTabs, notification, settingsLoaded]);
 
     // A debounced callback to save the current file tabs if nothing has changed in 5 seconds.
-    useDebounce(saveFileTabs, 5_000);
+    useDebounce(saveFileTabs, 5_000); // TODO::Make this configurable
 
     // A callback to close the application returning always false to not to prevent the app from closing.
     const onClose = React.useCallback(() => {
@@ -122,11 +133,6 @@ const App = ({ className }: AppProps) => {
     const aboutPopupClose = React.useCallback(() => {
         setAboutPopupVisible(false);
     }, []);
-
-    // Memoize the translated menu items.
-    const menuItems = React.useMemo(() => {
-        return appMenuItems(translate);
-    }, [translate]);
 
     // A callback to handle menu item and toolbar item clicks.
     const onMenuItemClick = React.useCallback(
@@ -145,36 +151,64 @@ const App = ({ className }: AppProps) => {
                     setPreferencesVisible(true);
                     break;
                 }
+                case "openFile": {
+                    void open({ filters: [{ name: translate("scriptFiles", "Script Files"), extensions: ["js", "ts"] }] })
+                        .then(files => {
+                            if (files) {
+                                void openExistingFile(files.path)
+                                    .then(() => {
+                                        saveOpenTabs()
+                                            .then(() => {
+                                                getAppState()
+                                                    .then((result: AppStateResult) => {
+                                                        setFileTabs(result.file_tabs);
+                                                    })
+                                                    .catch(error => notification("error", error));
+                                            })
+                                            .catch(error => notification("error", error));
+                                    })
+                                    .catch(error => notification("error", error));
+                            }
+                        })
+                        .catch(error => notification("error", error));
+                    break;
+                }
                 case "addNewTab": {
-                    let newFileName = translate("newFileWithIndex", "New file {{index}}", { index: indexRef.current + 1 });
-                    newFileName += selectedValues["language"] === "typescript" ? ".ts" : ".js";
+                    getNewTabId()
+                        .then(uid => {
+                            let newFileName = translate("newFileWithIndex", "New file {{index}}", { index: uid });
+                            newFileName += selectedValues["language"] === "typescript" ? ".ts" : ".js";
 
-                    void addNewTab({
-                        index: 0,
-                        path: null,
-                        is_temporary: true,
-                        script_language: selectedValues["language"],
-                        content: null,
-                        file_name: newFileName,
-                    })
-                        .then(() => {
-                            saveOpenTabs()
+                            void addNewTab({
+                                uid: 0,
+                                path: null,
+                                is_temporary: true,
+                                script_language: selectedValues["language"],
+                                content: null,
+                                file_name: newFileName,
+                                modified_at: null,
+                                file_name_path: null,
+                            })
                                 .then(() => {
-                                    getAppState()
-                                        .then((result: AppStateResult) => {
-                                            setFileTabs(result.file_tabs);
-                                            indexRef.current = result.file_index;
+                                    saveOpenTabs()
+                                        .then(() => {
+                                            getAppState()
+                                                .then((result: AppStateResult) => {
+                                                    setFileTabs(result.file_tabs);
+                                                })
+                                                .catch(error => notification("error", error));
                                         })
                                         .catch(error => notification("error", error));
                                 })
                                 .catch(error => notification("error", error));
                         })
                         .catch(error => notification("error", error));
+
                     break;
                 }
                 case "convertToJs": {
                     const newTabs = [...fileTabs];
-                    const index = newTabs.findIndex(f => f.index === activeTabKey);
+                    const index = newTabs.findIndex(f => f.uid === activeTabKey);
                     if (index !== -1 && newTabs[index].script_language === "typescript") {
                         newTabs[index].script_language = "javascript";
                         newTabs[index].content = transpileTypeSctiptToJs(newTabs[index].content ?? "", true);
@@ -276,10 +310,10 @@ const App = ({ className }: AppProps) => {
                 closeTitle={translate("close")}
             />
             <AppMenuToolbar //
-                menuItems={menuItems}
                 onItemClick={onMenuItemClick}
                 selectValues={selectedValues}
                 onSelectChange={onSelectedValueChanged}
+                disabledItems={disabledItems}
             />
             <div className={classNames(App.name, className)}>
                 <div id="mainView" className="App-itemsView">
@@ -295,7 +329,7 @@ const App = ({ className }: AppProps) => {
                         saveFileTabs={saveFileTabs}
                     />
                     <div className="EditorResultContainer">
-                        Results
+                        {translate("result", "Result")}
                         <Editor //
                             theme={previewDarkMode ?? settings.dark_mode ?? false ? "vs-dark" : "light"}
                             className="EditorResult"

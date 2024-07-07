@@ -23,5 +23,8 @@
     "scriptType": "Script type",
     "addNewTab": "New tab",
     "newFile": "New file",
-    "convertToJs": "Convert to JavaScript"
+    "convertToJs": "Convert to JavaScript",
+    "result": "Result",
+    "openFile": "Open file",
+    "scriptFiles": "Script files"
 }

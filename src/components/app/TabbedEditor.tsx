@@ -44,7 +44,7 @@ const TabbedEditorComponent = ({
     const onTabChange = React.useCallback(
         (activeTabKey?: string) => {
             const newKey = Number.parseInt(activeTabKey ?? "0");
-            const language = fileTabs.find(f => f.index === newKey)?.script_language;
+            const language = fileTabs.find(f => f.uid === newKey)?.script_language;
             setActiveTabScriptType((language ?? "typescript") as ScriptType);
             setActiveTabKey(newKey);
         },
@@ -54,7 +54,7 @@ const TabbedEditorComponent = ({
     const onEditValueChange = React.useCallback(
         (value: string | undefined) => {
             const newTabs = [...fileTabs];
-            const index = newTabs.findIndex(f => f.index === activeTabKey);
+            const index = newTabs.findIndex(f => f.uid === activeTabKey);
             newTabs[index].content = value ?? null;
             setFileTabs(newTabs);
         },
@@ -67,7 +67,7 @@ const TabbedEditorComponent = ({
         for (const tab of fileTabs) {
             items.push({
                 label: tab.file_name,
-                key: tab.index.toString(),
+                key: tab.uid.toString(),
                 closable: true,
                 className: "TabPane",
                 icon: <img className="IconStyle" src={tab.script_language === "typescript" ? TypeScriptLogo : JavaScriptLogo} width="16px" height="16px" />,
@@ -87,13 +87,13 @@ const TabbedEditorComponent = ({
     }, [darkMode, fileTabs, onEditValueChange]);
 
     React.useEffect(() => {
-        if (fileTabs.length > 0 && !fileTabs.some(f => f.index === activeTabKey)) {
-            setActiveTabKey(fileTabs[0].index);
+        if (fileTabs.length > 0 && !fileTabs.some(f => f.uid === activeTabKey)) {
+            setActiveTabKey(fileTabs[0].uid);
         }
     }, [fileTabs, activeTabKey, setActiveTabKey]);
 
     const evalueateValue = React.useCallback(async () => {
-        const tab = fileTabs.find(f => f.index === activeTabKey);
+        const tab = fileTabs.find(f => f.uid === activeTabKey);
         const editorValue = tab?.content;
         if (editorValue !== undefined && editorValue !== null) {
             const scriptValue = editorValue;
@@ -132,16 +132,18 @@ const TabbedEditorComponent = ({
     useDebounce(evalueateValue, 1_500);
 
     const onTabEdit = React.useCallback(
-        (_: unknown, action: "add" | "remove") => {
+        (key: React.MouseEvent | React.KeyboardEvent | string, action: "add" | "remove") => {
             if (action === "remove") {
                 const newTabs = [...fileTabs];
-                const index = newTabs.findIndex(f => f.index === activeTabKey);
-                newTabs.splice(index, 1);
-                setFileTabs(newTabs);
-                saveFileTabs();
+                if (typeof key === "string") {
+                    const index = newTabs.findIndex(f => f.uid === Number.parseInt(key));
+                    newTabs.splice(index, 1);
+                    setFileTabs(newTabs);
+                    saveFileTabs();
+                }
             }
         },
-        [activeTabKey, fileTabs, saveFileTabs, setFileTabs]
+        [fileTabs, saveFileTabs, setFileTabs]
     );
 
     return (

@@ -17,6 +17,7 @@
         "@fortawesome/react-fontawesome": "^0.2.2",
         "@monaco-editor/react": "^4.6.0",
         "@tauri-apps/api": ">=2.0.0-beta.14",
+        "@tauri-apps/plugin-dialog": "^2.0.0-beta.6",
         "@tauri-apps/plugin-process": "^2.0.0-beta.5",
         "@tauri-apps/plugin-shell": "^2.0.0-beta.6",
         "@tauri-apps/plugin-updater": "^2.0.0-beta.5",
@@ -25,10 +26,10 @@
         "classnames": "^2.5.1",
         "i18next": "^23.11.5",
         "react": "^18.3.1",
-        "typescript": "^5.5.3",
         "react-dom": "^18.3.1",
         "react-i18next": "^14.1.2",
-        "styled-components": "^6.1.11"
+        "styled-components": "^6.1.11",
+        "typescript": "^5.5.3"
     },
     "devDependencies": {
         "@tauri-apps/cli": "^2.0.0-beta.21",
