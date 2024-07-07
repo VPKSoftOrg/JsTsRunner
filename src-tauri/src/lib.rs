@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use std::{os::windows::fs::MetadataExt, path::Path};
+use std::path::Path;
 
 use chrono::{DateTime, Utc};
 use config::{
@@ -429,7 +429,7 @@ async fn open_existing_file(
 
     let modified_at = match meta_data {
         Ok(meta_data) => {
-            if meta_data.file_size() > 10000000 {
+            if meta_data.len() > 10000000 {
                 // Limit the file size to 10 MB
                 panic!("File is too large. The [hard-coded] limit is 10 MB.");
             }
