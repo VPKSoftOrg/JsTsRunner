@@ -18,12 +18,16 @@ type FileTabData = {
     path: string | null;
     /** The name of the file. */
     file_name: string;
+    /** The name and path of the file. */
+    file_name_path: string | null;
     /** A flag indicating whether the file is temporary. */
     is_temporary: boolean;
     /** The language of the script. */
     script_language: string;
     /** The content of the file. */
     content: string | null;
+    /** The last modified date of the file. */
+    modified_at: Date | null;
 };
 
 type ScriptType = "typescript" | "javascript";

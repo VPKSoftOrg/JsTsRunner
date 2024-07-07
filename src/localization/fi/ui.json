@@ -23,5 +23,8 @@
     "scriptType": "Skriptin tyyppi",
     "addNewTab": "Uusi välilehti",
     "newFile": "Uusi tiedosto",
-    "convertToJs": "Muunna JavaScriptiin"
+    "convertToJs": "Muunna JavaScriptiin",
+    "result": "Tulokset",
+    "openFile": "Avaa tiedosto",
+    "scriptFiles": "Skriptitiedostot"
 }

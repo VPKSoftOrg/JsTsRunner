@@ -125,5 +125,19 @@ const getNewTabId = async (): Promise<number> => {
     }
 };
 
-export { runScript, getAppState, addNewTab, saveOpenTabs, updateOpenTabs, loadFileState, getNewTabId };
+/**
+ * Opens an existing file using the Tauri API call.
+ * @param {string} fileName - The name of the file to open.
+ * @returns {Promise<boolean>} A value indicating whether the file was opened successfully.
+ * @throws {Error} If the Tauri API call fails.
+ */
+const openExistingFile = async (fileName: string): Promise<boolean> => {
+    try {
+        return invoke("open_existing_file", { fileName });
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
+export { runScript, getAppState, addNewTab, saveOpenTabs, updateOpenTabs, loadFileState, getNewTabId, openExistingFile };
 export type { AppStateResult };

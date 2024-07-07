@@ -5,9 +5,10 @@ import { Editor } from "@monaco-editor/react";
 import "./App.css";
 import classNames from "classnames";
 import { getCurrent } from "@tauri-apps/api/window";
+import { open } from "@tauri-apps/plugin-dialog";
 import { StyledTitle } from "./components/app/WindowTitle";
 import { useTranslate } from "./localization/Localization";
-import { MenuKeys, appMenuItems } from "./menu/MenuItems";
+import { MenuKeys } from "./menu/MenuItems";
 import { AboutPopup } from "./components/popups/AboutPopup";
 import { PreferencesPopup } from "./components/popups/PreferencesPopup";
 import { useSettings } from "./utilities/app/Settings";
@@ -16,7 +17,7 @@ import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
 import { CommonProps, FileTabData, ScriptType } from "./components/Types";
 import { AppMenuToolbar } from "./menu/AppMenuToolbar";
 import { TabbedEditor } from "./components/app/TabbedEditor";
-import { AppStateResult, addNewTab, getAppState, getNewTabId, loadFileState, saveOpenTabs, updateOpenTabs } from "./components/app/TauriWrappers";
+import { AppStateResult, addNewTab, getAppState, getNewTabId, loadFileState, openExistingFile, saveOpenTabs, updateOpenTabs } from "./components/app/TauriWrappers";
 import { useNotify } from "./utilities/app/Notify";
 import { useDebounce } from "./hooks/useDebounce";
 import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
@@ -88,11 +89,9 @@ const App = ({ className }: AppProps) => {
         if (tabScript === "typescript") {
             setDisabledItems(f => f.filter(item => item !== "convertToJs"));
         } else {
-            setDisabledItems(f => [...f, "convertToJs"]);
+            setDisabledItems(f => (f.includes("convertToJs") ? f : [...f, "convertToJs"]));
         }
     }, [fileTabs, activeTabKey]);
-
-    console.log(disabledItems);
 
     // Restore the window state.
     React.useEffect(() => {
@@ -152,6 +151,28 @@ const App = ({ className }: AppProps) => {
                     setPreferencesVisible(true);
                     break;
                 }
+                case "openFile": {
+                    void open({ filters: [{ name: translate("scriptFiles", "Script Files"), extensions: ["js", "ts"] }] })
+                        .then(files => {
+                            if (files) {
+                                void openExistingFile(files.path)
+                                    .then(() => {
+                                        saveOpenTabs()
+                                            .then(() => {
+                                                getAppState()
+                                                    .then((result: AppStateResult) => {
+                                                        setFileTabs(result.file_tabs);
+                                                    })
+                                                    .catch(error => notification("error", error));
+                                            })
+                                            .catch(error => notification("error", error));
+                                    })
+                                    .catch(error => notification("error", error));
+                            }
+                        })
+                        .catch(error => notification("error", error));
+                    break;
+                }
                 case "addNewTab": {
                     getNewTabId()
                         .then(uid => {
@@ -165,6 +186,8 @@ const App = ({ className }: AppProps) => {
                                 script_language: selectedValues["language"],
                                 content: null,
                                 file_name: newFileName,
+                                modified_at: null,
+                                file_name_path: null,
                             })
                                 .then(() => {
                                     saveOpenTabs()

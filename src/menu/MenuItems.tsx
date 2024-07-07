@@ -1,7 +1,7 @@
 //@ts-expect-error - React is required for JSX
 import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFile, faDoorOpen, faCircleQuestion, faInfo, faGear } from "@fortawesome/free-solid-svg-icons";
+import { faFile, faDoorOpen, faCircleQuestion, faInfo, faGear, faFolderOpen } from "@fortawesome/free-solid-svg-icons";
 import { LocalizeFunction } from "../localization/Localization";
 import { MenuItems } from "./AppMenu";
 
@@ -17,6 +17,15 @@ export const appMenuItems = (localize?: LocalizeFunction, disabledItems?: MenuKe
                 label: localize?.("preferences") ?? "Preferences",
                 icon: <FontAwesomeIcon icon={faGear} />,
                 disabled: disabledItems?.includes("preferencesMenu"),
+            },
+            {
+                type: "divider",
+            },
+            {
+                key: "openFile",
+                label: localize?.("openFile") ?? "Open File",
+                icon: <FontAwesomeIcon icon={faFolderOpen} />,
+                disabled: disabledItems?.includes("openFile"),
             },
             {
                 type: "divider",
@@ -45,4 +54,4 @@ export const appMenuItems = (localize?: LocalizeFunction, disabledItems?: MenuKe
     },
 ];
 
-export type MenuKeys = "fileMenu" | "helpMenu" | "aboutMenu" | "exitMenu" | "preferencesMenu" | "addNewTab" | "convertToJs";
+export type MenuKeys = "fileMenu" | "helpMenu" | "aboutMenu" | "exitMenu" | "preferencesMenu" | "addNewTab" | "convertToJs" | "openFile";

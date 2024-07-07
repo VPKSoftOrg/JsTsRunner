@@ -24,6 +24,7 @@ SOFTWARE.
 
 use std::sync::Mutex;
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 /// The application state for the Tauri application.
@@ -67,10 +68,14 @@ pub struct FileTabData {
     pub path: Option<String>,
     /// The name of the file.
     pub file_name: String,
+    /// The name and path of the file.
+    pub file_name_path: Option<String>,
     /// A flag indicating if the file is temporary.
     pub is_temporary: bool,
     /// The language of the script.
     pub script_language: String,
     /// The optional content of the file. The content can be in the file system also if the file is not temporary.
     pub content: Option<String>,
+    /// The last modified date of the file.
+    pub modified_at: Option<DateTime<Utc>>,
 }
