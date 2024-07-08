@@ -17,11 +17,24 @@ import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
 import { CommonProps, FileTabData, ScriptType } from "./components/Types";
 import { AppMenuToolbar } from "./menu/AppMenuToolbar";
 import { TabbedEditor } from "./components/app/TabbedEditor";
-import { AppStateResult, addNewTab, getAppState, getNewTabId, loadFileState, openExistingFile, saveOpenTabs, updateOpenTabs } from "./components/app/TauriWrappers";
+import {
+    AppStateResult,
+    addNewTab,
+    getAppState,
+    getNewTabId,
+    isFileChangedInFs,
+    loadFileState,
+    openExistingFile,
+    reload_file_contents,
+    saveOpenTabs,
+    updateOpenTabs,
+} from "./components/app/TauriWrappers";
 import { useNotify } from "./utilities/app/Notify";
 import { useDebounce } from "./hooks/useDebounce";
 import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
 import { ToolBarItems } from "./menu/ToolbarItems";
+import { DialogButtons, DialogResult, PopupType } from "./components/Enums";
+import { ConfirmPopup } from "./components/popups/ConfirmPopup";
 
 type AppProps = CommonProps;
 
@@ -51,6 +64,10 @@ const App = ({ className }: AppProps) => {
     const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
     const [activeTabKey, setActiveTabKey] = React.useState(0);
     const [disabledItems, setDisabledItems] = React.useState<(MenuKeys | ToolBarItems)[]>([]);
+    const [reloadConfirmVisible, setReloadConfirmVisible] = React.useState(false);
+
+    const fileNameRef = React.useRef<string>("");
+    const previousFocusedRef = React.useRef<boolean>(false);
 
     // Antd theme-related hooks.
     const { token } = useAntdToken();
@@ -83,15 +100,33 @@ const App = ({ className }: AppProps) => {
             .catch(error => notification("error", error));
     }, [notification, settingsLoaded]);
 
+    const checkTabFileChanged = React.useCallback(() => {
+        const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
+        if (tabScript) {
+            isFileChangedInFs(tabScript)
+                .then(result => {
+                    if (result) {
+                        fileNameRef.current = tabScript.file_name;
+                        setReloadConfirmVisible(true);
+                    }
+                })
+                .catch(error => notification("error", error));
+        }
+    }, [fileTabs, activeTabKey, notification]);
+
     // Disable the "Convert to JavaScript" menu item if the currently selected file is not a JavaScript file.
     React.useEffect(() => {
-        const tabScript = fileTabs.find(tab => tab.uid === activeTabKey)?.script_language;
-        if (tabScript === "typescript") {
-            setDisabledItems(f => f.filter(item => item !== "convertToJs"));
-        } else {
-            setDisabledItems(f => (f.includes("convertToJs") ? f : [...f, "convertToJs"]));
+        const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
+        if (tabScript) {
+            if (tabScript.script_language === "typescript") {
+                setDisabledItems(f => f.filter(item => item !== "convertToJs"));
+            } else {
+                setDisabledItems(f => (f.includes("convertToJs") ? f : [...f, "convertToJs"]));
+            }
+
+            checkTabFileChanged();
         }
-    }, [fileTabs, activeTabKey]);
+    }, [fileTabs, activeTabKey, notification, checkTabFileChanged]);
 
     // Restore the window state.
     React.useEffect(() => {
@@ -134,6 +169,45 @@ const App = ({ className }: AppProps) => {
         setAboutPopupVisible(false);
     }, []);
 
+    const reloadAppState = React.useCallback(() => {
+        getAppState()
+            .then((result: AppStateResult) => {
+                setFileTabs(result.file_tabs);
+            })
+            .catch(error => notification("error", error));
+    }, [notification]);
+
+    const reloadCurrentFileContents = React.useCallback(() => {
+        const newTabs = [...fileTabs];
+        const index = newTabs.findIndex(f => f.uid === activeTabKey);
+        if (index !== -1 && newTabs[index].file_name_path !== null) {
+            reload_file_contents(newTabs[index])
+                .then(() => {
+                    reloadAppState();
+                })
+                .catch(error => notification("error", error));
+        }
+    }, [activeTabKey, fileTabs, reloadAppState, notification]);
+
+    const openExistingFileWrapped = React.useCallback(
+        (filePath: string) => {
+            return openExistingFile(filePath)
+                .then(() => {
+                    saveOpenTabs()
+                        .then(() => {
+                            getAppState()
+                                .then((result: AppStateResult) => {
+                                    setFileTabs(result.file_tabs);
+                                })
+                                .catch(error => notification("error", error));
+                        })
+                        .catch(error => notification("error", error));
+                })
+                .catch(error => notification("error", error));
+        },
+        [notification]
+    );
+
     // A callback to handle menu item and toolbar item clicks.
     const onMenuItemClick = React.useCallback(
         (key: unknown) => {
@@ -155,19 +229,7 @@ const App = ({ className }: AppProps) => {
                     void open({ filters: [{ name: translate("scriptFiles", "Script Files"), extensions: ["js", "ts"] }] })
                         .then(files => {
                             if (files) {
-                                void openExistingFile(files.path)
-                                    .then(() => {
-                                        saveOpenTabs()
-                                            .then(() => {
-                                                getAppState()
-                                                    .then((result: AppStateResult) => {
-                                                        setFileTabs(result.file_tabs);
-                                                    })
-                                                    .catch(error => notification("error", error));
-                                            })
-                                            .catch(error => notification("error", error));
-                                    })
-                                    .catch(error => notification("error", error));
+                                void openExistingFileWrapped(files.path).catch(error => notification("error", error));
                             }
                         })
                         .catch(error => notification("error", error));
@@ -206,6 +268,10 @@ const App = ({ className }: AppProps) => {
 
                     break;
                 }
+                case "reloadFromDisk": {
+                    reloadCurrentFileContents();
+                    break;
+                }
                 case "convertToJs": {
                     const newTabs = [...fileTabs];
                     const index = newTabs.findIndex(f => f.uid === activeTabKey);
@@ -223,8 +289,25 @@ const App = ({ className }: AppProps) => {
                 }
             }
         },
-        [activeTabKey, appWindow, fileTabs, notification, selectedValues, translate]
+        [activeTabKey, appWindow, fileTabs, notification, openExistingFileWrapped, reloadCurrentFileContents, selectedValues, translate]
     );
+
+    React.useEffect(() => {
+        const unlisten = async () =>
+            await appWindow.onFocusChanged(({ payload: focused }) => {
+                if (focused && previousFocusedRef.current !== focused) {
+                    checkTabFileChanged();
+                }
+                previousFocusedRef.current = focused;
+            });
+
+        // you need to call unlisten if your handler goes out of scope e.g. the component is unmounted
+        return () => {
+            void unlisten()
+                .then()
+                .catch(error => notification("error", error));
+        };
+    }, [appWindow, checkTabFileChanged, notification]);
 
     // A callback to close the preferences popup.
     const onPreferencesClose = React.useCallback(() => {
@@ -293,6 +376,17 @@ const App = ({ className }: AppProps) => {
         };
     }, [appWindow]);
 
+    const onReloadConfirmClose = React.useCallback(
+        (result: DialogResult) => {
+            setReloadConfirmVisible(false);
+            if (result === DialogResult.Yes) {
+                reloadCurrentFileContents();
+            }
+            reloadAppState();
+        },
+        [reloadAppState, reloadCurrentFileContents]
+    );
+
     // Render loading indicator if the settings and app state are not loaded yet.
     if (!settingsLoaded || settings === null || appStateLoaded.current === false) {
         return <div>Loading...</div>;
@@ -355,6 +449,13 @@ const App = ({ className }: AppProps) => {
                     notification={notification}
                 />
             )}
+            <ConfirmPopup //
+                visible={reloadConfirmVisible}
+                mode={PopupType.Confirm}
+                message={translate("fileHasBeenChangedReload", "The file '{{file}}' has been changed. Reload the file to see the changed contents.", { file: fileNameRef.current })}
+                buttons={DialogButtons.Yes | DialogButtons.No}
+                onClose={onReloadConfirmClose}
+            />
         </>
     );
 };

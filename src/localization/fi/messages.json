@@ -1,5 +1,6 @@
 {
     "updateCheckFailedFile": "Tiedostoa avataessa tapahtui virhe: {{error}}.",
     "newFileWithIndex": "Uusi tiedosto {{index}}",
-    "currentMustBeTsFile": "Tiedostosi tyyppi on oltava TypeScript-tiedosto, jotta se voidaan muuntaa JavaScriptiin."
+    "currentMustBeTsFile": "Tiedostosi tyyppi on oltava TypeScript-tiedosto, jotta se voidaan muuntaa JavaScriptiin.",
+    "fileHasBeenChangedReload": "Tiedosto '{{file}}' on muuttunut. Ladataanko tiedosto uudelleen, jotta muutokset näytetään."
 }

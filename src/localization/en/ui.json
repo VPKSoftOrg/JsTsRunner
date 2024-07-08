@@ -26,5 +26,6 @@
     "convertToJs": "Convert to JavaScript",
     "result": "Result",
     "openFile": "Open file",
-    "scriptFiles": "Script files"
+    "scriptFiles": "Script files",
+    "reloadFromDisk": "Reload file from disk"
 }
