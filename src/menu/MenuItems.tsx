@@ -54,4 +54,4 @@ export const appMenuItems = (localize?: LocalizeFunction, disabledItems?: MenuKe
     },
 ];
 
-export type MenuKeys = "fileMenu" | "helpMenu" | "aboutMenu" | "exitMenu" | "preferencesMenu" | "addNewTab" | "convertToJs" | "openFile";
+export type MenuKeys = "fileMenu" | "helpMenu" | "aboutMenu" | "exitMenu" | "preferencesMenu" | "addNewTab" | "convertToJs" | "openFile" | "reloadFromDisk";

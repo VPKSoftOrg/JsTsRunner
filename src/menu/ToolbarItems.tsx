@@ -1,7 +1,7 @@
 //@ts-expect-error - React is required for JSX
 import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowsRotate, faDoorOpen, faGear, faInfo, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsRotate, faCodeFork, faDoorOpen, faGear, faInfo, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { LocalizeFunction } from "../localization/Localization";
 
 import { ToolBarItem, ToolBarSeparator } from "./AppToolbar";
@@ -50,12 +50,20 @@ export const appToolbarItems = (localize?: LocalizeFunction, disabledItems?: (Me
     },
     "|",
     {
-        icon: <FontAwesomeIcon icon={faArrowsRotate} />,
+        icon: <FontAwesomeIcon icon={faCodeFork} />,
         title: localize?.("convertToJs") ?? "Convert to JavaScript",
         tooltipTitle: localize?.("convertToJs") ?? "Convert to JavaScript",
         clickActionObject: "convertToJs",
         type: "button",
         disabled: disabledItems?.includes("convertToJs"),
+    },
+    {
+        icon: <FontAwesomeIcon icon={faArrowsRotate} />,
+        title: localize?.("reloadFromDisk") ?? "Reload file from Disk",
+        tooltipTitle: localize?.("reloadFromDisk") ?? "Reload file from Disk",
+        clickActionObject: "reloadFromDisk",
+        type: "button",
+        disabled: disabledItems?.includes("reloadFromDisk"),
     },
     {
         icon: <FontAwesomeIcon icon={faPlus} />,

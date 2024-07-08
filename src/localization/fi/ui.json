@@ -26,5 +26,6 @@
     "convertToJs": "Muunna JavaScriptiin",
     "result": "Tulokset",
     "openFile": "Avaa tiedosto",
-    "scriptFiles": "Skriptitiedostot"
+    "scriptFiles": "Skriptitiedostot",
+    "reloadFromDisk": "Lataa tiedosto uudelleen levyltä"
 }

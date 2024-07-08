@@ -5,26 +5,30 @@ import { initReactI18next, useTranslation } from "react-i18next";
 import uiEnglish from "../localization/en/ui.json";
 import messagesEnglish from "../localization/en/messages.json";
 import settingsEnglish from "../localization/en/settings.json";
+import dialogEnglish from "../localization/en/dialog.json";
 import uiFinnish from "../localization/fi/ui.json";
 import messagesFinnish from "../localization/fi/messages.json";
 import settingsFinnish from "../localization/fi/settings.json";
+import dialogFinnish from "../localization/fi/dialog.json";
 
 const localizationResources = {
     en: {
         ui: uiEnglish,
         messages: messagesEnglish,
         settings: settingsEnglish,
+        dialog: dialogEnglish,
     },
     fi: {
         ui: uiFinnish,
         messages: messagesFinnish,
         settings: settingsFinnish,
+        dialog: dialogFinnish,
     },
 };
 
 export type Locales = keyof typeof localizationResources;
 export type LocalizationResources = keyof (typeof localizationResources)[Locales];
-export type LocalizationNames = keyof typeof uiEnglish | keyof typeof messagesEnglish | keyof typeof settingsEnglish;
+export type LocalizationNames = keyof typeof uiEnglish | keyof typeof messagesEnglish | keyof typeof settingsEnglish | keyof typeof dialogEnglish;
 const resourceArray = Object.keys(localizationResources["en"]);
 
 const defaultLanguage: Locales = "en";
