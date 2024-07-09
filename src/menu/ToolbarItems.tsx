@@ -4,12 +4,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowsRotate, faCodeFork, faDoorOpen, faGear, faInfo, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { LocalizeFunction } from "../localization/Localization";
 
+import { SaveAsIcon, SaveIcon } from "../img/ImageExports";
 import { ToolBarItem, ToolBarSeparator } from "./AppToolbar";
 import { MenuKeys } from "./MenuItems";
 
 type ToolBarItems = "scriptType";
 
-export const appToolbarItems = (localize?: LocalizeFunction, disabledItems?: (MenuKeys | ToolBarItems)[]): (ToolBarItem<MenuKeys> | ToolBarSeparator)[] => [
+export const appToolbarItems = (localize?: LocalizeFunction, darkMode?: boolean, disabledItems?: (MenuKeys | ToolBarItems)[]): (ToolBarItem<MenuKeys> | ToolBarSeparator)[] => [
     {
         icon: <FontAwesomeIcon icon={faGear} />,
         title: localize?.("preferences") ?? "Preferences",
@@ -72,6 +73,23 @@ export const appToolbarItems = (localize?: LocalizeFunction, disabledItems?: (Me
         clickActionObject: "addNewTab",
         type: "button",
         disabled: disabledItems?.includes("addNewTab"),
+    },
+    "|",
+    {
+        icon: <SaveAsIcon width={16} height={16} darkMode={darkMode} />,
+        title: localize?.("saveAs") ?? "Save As",
+        tooltipTitle: localize?.("saveAs") ?? "Save As",
+        clickActionObject: "saveAs",
+        type: "button",
+        disabled: disabledItems?.includes("saveAs"),
+    },
+    {
+        icon: <SaveIcon width={16} height={16} darkMode={darkMode} />,
+        title: localize?.("saveAs") ?? "Save As",
+        tooltipTitle: localize?.("saveAs") ?? "Save As",
+        clickActionObject: "saveAs",
+        type: "button",
+        disabled: disabledItems?.includes("saveAs"),
     },
 ];
 

@@ -40,6 +40,7 @@ type AppMenuToolbarProps = {
         [key: string]: string;
     };
     disabledItems?: (MenuKeys | ToolBarItems)[];
+    darkMode?: boolean;
     onItemClick: (key: MenuKeys) => void;
     onSelectChange(value: string, name?: string): void;
 } & CommonProps;
@@ -53,6 +54,7 @@ const AppMenuToolbarComponent = ({
     className, //
     selectValues,
     disabledItems,
+    darkMode,
     onItemClick,
     onSelectChange,
 }: AppMenuToolbarProps) => {
@@ -74,7 +76,7 @@ const AppMenuToolbarComponent = ({
                 onItemClick={onToolbarItemInternal}
             />
             <AppToolbar //
-                toolBarItems={appToolbarItems(translate, disabledItems)}
+                toolBarItems={appToolbarItems(translate, darkMode, disabledItems)}
                 onItemClick={onToolbarItemInternal}
                 onSelectChange={onSelectChange}
                 selectValues={selectValues}

@@ -27,5 +27,7 @@
     "result": "Tulokset",
     "openFile": "Avaa tiedosto",
     "scriptFiles": "Skriptitiedostot",
-    "reloadFromDisk": "Lataa tiedosto uudelleen levyltä"
+    "reloadFromDisk": "Lataa tiedosto uudelleen levyltä",
+    "attributionAndCopyright": "Tekijänoikeus ja lisenssi",
+    "icons": "Kuvakkeet"
 }

@@ -36,6 +36,7 @@ module.exports = {
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/no-floating-promises": "warn",
+        "react/forbid-component-props": ["error", { forbid: [{ "propName": "style", message: "Use className to define the component style"}] }],
         "@typescript-eslint/no-explicit-any": "warn",
         "@typescript-eslint/no-unused-vars": "warn",
         "unicorn/prevent-abbreviations": "off",

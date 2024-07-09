@@ -131,7 +131,7 @@ async fn save_settings(config: AppConfig) -> bool {
     set_app_config(config)
 }
 
-/// See [`Result<String, String>`](TauriCommands::run_script)
+/// See [TauriCommands::run_script]
 #[tauri::command]
 async fn run_script(code: String, app_state: State<'_, AppState>) -> Result<String, String> {
     TauriCommands::run_script(code, app_state).await
@@ -329,7 +329,7 @@ async fn get_app_state(app_state: State<'_, AppState>) -> Result<AppStateResult,
     }
 }
 
-/// See [`Result<bool, String>`](TauriCommands::open_existing_file)
+/// See [TauriCommands::open_existing_file]
 #[tauri::command]
 async fn open_existing_file(
     file_name: String,
@@ -338,7 +338,7 @@ async fn open_existing_file(
     TauriCommands::open_existing_file(file_name, app_state).await
 }
 
-/// See [`Result<bool, String>`](TauriCommands::is_file_changed_in_fs)
+/// See [TauriCommands::is_file_changed_in_fs]
 #[tauri::command]
 async fn is_file_changed_in_fs(
     data: FileTabData,
@@ -347,7 +347,7 @@ async fn is_file_changed_in_fs(
     TauriCommands::is_file_changed_in_fs(data, app_state).await
 }
 
-/// See [`Result<bool, String>`](TauriCommands::reload_file_contents)
+/// See [TauriCommands::reload_file_contents]
 #[tauri::command]
 async fn reload_file_contents(
     data: FileTabData,

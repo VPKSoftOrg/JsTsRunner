@@ -408,6 +408,7 @@ const App = ({ className }: AppProps) => {
                 selectValues={selectedValues}
                 onSelectChange={onSelectedValueChanged}
                 disabledItems={disabledItems}
+                darkMode={previewDarkMode ?? settings.dark_mode ?? false}
             />
             <div className={classNames(App.name, className)}>
                 <div id="mainView" className="App-itemsView">
