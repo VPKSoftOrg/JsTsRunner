@@ -28,6 +28,8 @@ type FileTabData = {
     content: string | null;
     /** The last modified date of the file. */
     modified_at: Date | null;
+    /** The last modified date of the file in the application state. */
+    modified_at_state: Date | null;
 };
 
 type ScriptType = "typescript" | "javascript";
