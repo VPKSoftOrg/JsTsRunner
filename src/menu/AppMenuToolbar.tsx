@@ -72,7 +72,7 @@ const AppMenuToolbarComponent = ({
             className={classNames(AppMenuToolbar.name, className)}
         >
             <AppMenu //
-                items={appMenuItems(translate, disabledItems as MenuKeys[] | undefined)}
+                items={appMenuItems(translate, darkMode, disabledItems as MenuKeys[] | undefined)}
                 onItemClick={onToolbarItemInternal}
             />
             <AppToolbar //
