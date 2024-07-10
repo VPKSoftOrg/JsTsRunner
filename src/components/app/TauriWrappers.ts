@@ -172,6 +172,21 @@ const reloadFileContents = async (data: FileTabData) => {
     }
 };
 
+/**
+ * Saves the file contents using the Tauri API call.
+ * @param {FileTabData} data - The file data to save.
+ * @param {string | null} fileNamePath - The name and path of the file to save.
+ * @returns {Promise<boolean>} A value indicating whether the file contents were saved successfully.
+ * @throws {Error} If the Tauri API call fails.
+ */
+const saveFileContents = async (data: FileTabData, fileNamePath: string | null) => {
+    try {
+        return await invoke("save_file_contents", { data, fileNamePath });
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
 export {
     //
     runScript,
@@ -183,7 +198,8 @@ export {
     getNewTabId,
     openExistingFile,
     isFileChangedInFs,
-    reloadFileContents as reload_file_contents,
+    reloadFileContents,
+    saveFileContents,
 };
 
 export type { AppStateResult };

@@ -29,5 +29,9 @@
     "scriptFiles": "Skriptitiedostot",
     "reloadFromDisk": "Lataa tiedosto uudelleen levyltä",
     "attributionAndCopyright": "Tekijänoikeus ja lisenssi",
-    "icons": "Kuvakkeet"
+    "icons": "Kuvakkeet",
+    "save": "Tallenna",
+    "saveAs": "Tallenna nimellä",
+    "typeScriptFiles": "TypeScript-tiedostot",
+    "javaScriptFiles": "JavaScript-tiedostot"
 }

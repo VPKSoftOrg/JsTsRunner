@@ -29,5 +29,9 @@
     "scriptFiles": "Script files",
     "reloadFromDisk": "Reload file from disk",
     "attributionAndCopyright": "Attribution and copyright",
-    "icons": "Icons"
+    "icons": "Icons",
+    "save": "Save",
+    "saveAs": "Save as",
+    "typeScriptFiles": "TypeScript files",
+    "javaScriptFiles": "JavaScript files"
 }
