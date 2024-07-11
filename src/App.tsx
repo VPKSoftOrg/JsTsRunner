@@ -5,7 +5,7 @@ import { Editor } from "@monaco-editor/react";
 import "./App.css";
 import classNames from "classnames";
 import { getCurrent } from "@tauri-apps/api/window";
-import { open, save } from "@tauri-apps/plugin-dialog";
+import { open, save, SaveDialogOptions } from "@tauri-apps/plugin-dialog";
 import { StyledTitle } from "./components/app/WindowTitle";
 import { LocalizeFunction, useTranslate } from "./localization/Localization";
 import { MenuKeys } from "./menu/MenuItems";
@@ -554,11 +554,15 @@ const saveTab = async (
     return true;
 };
 
-const getDialogFilter = (translate: LocalizeFunction, data: FileTabData) => {
-    if (data.script_language === "typescript") {
-        return { filters: [{ name: translate("typeScriptFiles", "TypeScript files"), extensions: ["ts"] }] };
-    }
-    return { filters: [{ name: translate("javaScriptFiles", "JavaScript files"), extensions: ["js"] }] };
+const getDialogFilter = (translate: LocalizeFunction, data: FileTabData): SaveDialogOptions => {
+    const result: SaveDialogOptions =
+        data.script_language === "typescript"
+            ? { filters: [{ name: translate("typeScriptFiles", "TypeScript files"), extensions: ["ts"] }] }
+            : { filters: [{ name: translate("javaScriptFiles", "JavaScript files"), extensions: ["js"] }] };
+
+    result.defaultPath = data.file_name_path ?? data.file_name;
+
+    return result;
 };
 
 const getOpenDialogFilter = (translate: LocalizeFunction) => ({ filters: [{ name: translate("scriptFiles", "Script Files"), extensions: ["js", "ts"] }] });
