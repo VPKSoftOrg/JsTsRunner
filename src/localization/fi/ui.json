@@ -27,5 +27,13 @@
     "result": "Tulokset",
     "openFile": "Avaa tiedosto",
     "scriptFiles": "Skriptitiedostot",
-    "reloadFromDisk": "Lataa tiedosto uudelleen levyltä"
+    "reloadFromDisk": "Lataa tiedosto uudelleen levyltä",
+    "attributionAndCopyright": "Tekijänoikeus ja lisenssi",
+    "icons": "Kuvakkeet",
+    "save": "Tallenna",
+    "saveAs": "Tallenna nimellä",
+    "typeScriptFiles": "TypeScript-tiedostot",
+    "javaScriptFiles": "JavaScript-tiedostot",
+    "codeMenu": "Koodi",
+    "evaluateCode": "Suorita koodi"
 }

@@ -5,9 +5,9 @@ import { Editor } from "@monaco-editor/react";
 import "./App.css";
 import classNames from "classnames";
 import { getCurrent } from "@tauri-apps/api/window";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, save, SaveDialogOptions } from "@tauri-apps/plugin-dialog";
 import { StyledTitle } from "./components/app/WindowTitle";
-import { useTranslate } from "./localization/Localization";
+import { LocalizeFunction, useTranslate } from "./localization/Localization";
 import { MenuKeys } from "./menu/MenuItems";
 import { AboutPopup } from "./components/popups/AboutPopup";
 import { PreferencesPopup } from "./components/popups/PreferencesPopup";
@@ -25,16 +25,18 @@ import {
     isFileChangedInFs,
     loadFileState,
     openExistingFile,
-    reload_file_contents,
+    reloadFileContents,
+    saveFileContents,
     saveOpenTabs,
     updateOpenTabs,
 } from "./components/app/TauriWrappers";
-import { useNotify } from "./utilities/app/Notify";
+import { NotificationType, useNotify } from "./utilities/app/Notify";
 import { useDebounce } from "./hooks/useDebounce";
 import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
 import { ToolBarItems } from "./menu/ToolbarItems";
 import { DialogButtons, DialogResult, PopupType } from "./components/Enums";
 import { ConfirmPopup } from "./components/popups/ConfirmPopup";
+import { evalueateValue } from "./utilities/app/Code";
 
 type AppProps = CommonProps;
 
@@ -83,6 +85,21 @@ const App = ({ className }: AppProps) => {
     const appWindow = React.useMemo(() => getCurrent(), []);
     const appStateLoaded = React.useRef<boolean>(false);
 
+    // Evaluate the active tab's code.
+    const evaluateActiveCode = React.useCallback(() => {
+        if (activeTabKey) {
+            const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
+
+            if (tabScript) {
+                evalueateValue(tabScript.content, tabScript.script_language)
+                    .then(value => {
+                        setEvaluationResult(value);
+                    })
+                    .catch(error => notification("error", error));
+            }
+        }
+    }, [activeTabKey, fileTabs, notification]);
+
     // Load the initial application state consisting of the file tabs and related data.
     React.useEffect(() => {
         if (appStateLoaded.current && !settingsLoaded) {
@@ -94,12 +111,14 @@ const App = ({ className }: AppProps) => {
                     .then((result: AppStateResult) => {
                         setFileTabs(result.file_tabs);
                         appStateLoaded.current = true;
+                        evaluateActiveCode();
                     })
                     .catch(error => notification("error", error));
             })
             .catch(error => notification("error", error));
-    }, [notification, settingsLoaded]);
+    }, [evaluateActiveCode, notification, settingsLoaded]);
 
+    // Check if the active tab's file has been changed in the filesystem.
     const checkTabFileChanged = React.useCallback(() => {
         const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
         if (tabScript) {
@@ -114,19 +133,24 @@ const App = ({ className }: AppProps) => {
         }
     }, [fileTabs, activeTabKey, notification]);
 
+    // Enable or disable the specified menu or toolbar item.
+    const enableDisableMenuToolbarItem = React.useCallback((mtItem: MenuKeys | ToolBarItems, enabled: boolean) => {
+        if (enabled) {
+            setDisabledItems(f => f.filter(item => item !== mtItem));
+        } else {
+            setDisabledItems(f => (f.includes(mtItem) ? f : [...f, mtItem]));
+        }
+    }, []);
+
     // Disable the "Convert to JavaScript" menu item if the currently selected file is not a JavaScript file.
     React.useEffect(() => {
         const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
         if (tabScript) {
-            if (tabScript.script_language === "typescript") {
-                setDisabledItems(f => f.filter(item => item !== "convertToJs"));
-            } else {
-                setDisabledItems(f => (f.includes("convertToJs") ? f : [...f, "convertToJs"]));
-            }
+            enableDisableMenuToolbarItem("convertToJs", tabScript.script_language === "typescript");
 
             checkTabFileChanged();
         }
-    }, [fileTabs, activeTabKey, notification, checkTabFileChanged]);
+    }, [fileTabs, activeTabKey, notification, checkTabFileChanged, enableDisableMenuToolbarItem]);
 
     // Restore the window state.
     React.useEffect(() => {
@@ -169,6 +193,7 @@ const App = ({ className }: AppProps) => {
         setAboutPopupVisible(false);
     }, []);
 
+    // A callback to reload the application state.
     const reloadAppState = React.useCallback(() => {
         getAppState()
             .then((result: AppStateResult) => {
@@ -177,11 +202,12 @@ const App = ({ className }: AppProps) => {
             .catch(error => notification("error", error));
     }, [notification]);
 
+    // A callback to reload the current file contents.
     const reloadCurrentFileContents = React.useCallback(() => {
         const newTabs = [...fileTabs];
         const index = newTabs.findIndex(f => f.uid === activeTabKey);
         if (index !== -1 && newTabs[index].file_name_path !== null) {
-            reload_file_contents(newTabs[index])
+            reloadFileContents(newTabs[index])
                 .then(() => {
                     reloadAppState();
                 })
@@ -189,6 +215,7 @@ const App = ({ className }: AppProps) => {
         }
     }, [activeTabKey, fileTabs, reloadAppState, notification]);
 
+    // A callback to open an existing file.
     const openExistingFileWrapped = React.useCallback(
         (filePath: string) => {
             return openExistingFile(filePath)
@@ -206,6 +233,36 @@ const App = ({ className }: AppProps) => {
                 .catch(error => notification("error", error));
         },
         [notification]
+    );
+
+    // A callback to save the application state and reload it afterwards.
+    const saveAppStateReload = React.useCallback(async () => {
+        return saveOpenTabs()
+            .then(() => {
+                getAppState()
+                    .then((result: AppStateResult) => {
+                        setFileTabs(result.file_tabs);
+                    })
+                    .catch(error => notification("error", error));
+            })
+            .catch(error => notification("error", error));
+    }, [notification]);
+
+    // Enable or disable the "Save", "Save As" and "Evaluate Code" menu and toolbar items
+    // based on the currently selected tab.
+    React.useEffect(() => {
+        const tab = fileTabs.findIndex(tab => tab.uid === activeTabKey);
+        enableDisableMenuToolbarItem("save", tab !== -1);
+        enableDisableMenuToolbarItem("saveAs", tab !== -1);
+        enableDisableMenuToolbarItem("evaluateCode", tab !== -1);
+    }, [activeTabKey, enableDisableMenuToolbarItem, fileTabs]);
+
+    // A callback to save the tab specified by the tab key.
+    const saveFileCallback = React.useCallback(
+        async (tabkey: number) => {
+            return saveTab(tabkey, fileTabs, translate, saveAppStateReload, notification);
+        },
+        [fileTabs, translate, saveAppStateReload, notification]
     );
 
     // A callback to handle menu item and toolbar item clicks.
@@ -226,7 +283,7 @@ const App = ({ className }: AppProps) => {
                     break;
                 }
                 case "openFile": {
-                    void open({ filters: [{ name: translate("scriptFiles", "Script Files"), extensions: ["js", "ts"] }] })
+                    void open(getOpenDialogFilter(translate))
                         .then(files => {
                             if (files) {
                                 void openExistingFileWrapped(files.path).catch(error => notification("error", error));
@@ -245,22 +302,15 @@ const App = ({ className }: AppProps) => {
                                 uid: 0,
                                 path: null,
                                 is_temporary: true,
-                                script_language: selectedValues["language"],
+                                script_language: selectedValues["language"] as ScriptType,
                                 content: null,
                                 file_name: newFileName,
                                 modified_at: null,
                                 file_name_path: null,
+                                modified_at_state: new Date(),
                             })
                                 .then(() => {
-                                    saveOpenTabs()
-                                        .then(() => {
-                                            getAppState()
-                                                .then((result: AppStateResult) => {
-                                                    setFileTabs(result.file_tabs);
-                                                })
-                                                .catch(error => notification("error", error));
-                                        })
-                                        .catch(error => notification("error", error));
+                                    saveAppStateReload().catch(error => notification("error", error));
                                 })
                                 .catch(error => notification("error", error));
                         })
@@ -284,14 +334,52 @@ const App = ({ className }: AppProps) => {
                     }
                     break;
                 }
+                case "save": {
+                    void saveFileCallback(activeTabKey).catch(error => notification("error", error));
+
+                    break;
+                }
+                case "saveAs": {
+                    const index = fileTabs.findIndex(f => f.uid === activeTabKey);
+                    if (index !== -1) {
+                        const tab = fileTabs[index];
+                        save(getDialogFilter(translate, tab))
+                            .then((fileName: string | null) => {
+                                if (fileName) {
+                                    saveFileContents(tab, fileName)
+                                        .then(() => saveAppStateReload())
+                                        .catch(error => notification("error", error));
+                                }
+                            })
+                            .catch(error => notification("error", error));
+                    }
+                    break;
+                }
+                case "evaluateCode": {
+                    evaluateActiveCode();
+                    break;
+                }
                 default: {
                     break;
                 }
             }
         },
-        [activeTabKey, appWindow, fileTabs, notification, openExistingFileWrapped, reloadCurrentFileContents, selectedValues, translate]
+        [
+            activeTabKey, //
+            appWindow,
+            evaluateActiveCode,
+            fileTabs,
+            notification,
+            openExistingFileWrapped,
+            reloadCurrentFileContents,
+            saveAppStateReload,
+            saveFileCallback,
+            selectedValues,
+            translate,
+        ]
     );
 
+    // An effect to check if the current tab file contents has been changed after the window has been focused.
     React.useEffect(() => {
         const unlisten = async () =>
             await appWindow.onFocusChanged(({ payload: focused }) => {
@@ -376,6 +464,7 @@ const App = ({ className }: AppProps) => {
         };
     }, [appWindow]);
 
+    // A callback after the reload confirm popup is closed and a result from the popup is received.
     const onReloadConfirmClose = React.useCallback(
         (result: DialogResult) => {
             setReloadConfirmVisible(false);
@@ -408,6 +497,7 @@ const App = ({ className }: AppProps) => {
                 selectValues={selectedValues}
                 onSelectChange={onSelectedValueChanged}
                 disabledItems={disabledItems}
+                darkMode={previewDarkMode ?? settings.dark_mode ?? false}
             />
             <div className={classNames(App.name, className)}>
                 <div id="mainView" className="App-itemsView">
@@ -421,6 +511,8 @@ const App = ({ className }: AppProps) => {
                         setFileTabs={setFileTabs}
                         setActiveTabScriptType={setScriptStype}
                         saveFileTabs={saveFileTabs}
+                        saveTab={saveFileCallback}
+                        notification={notification}
                     />
                     <div className="EditorResultContainer">
                         {translate("result", "Result")}
@@ -459,6 +551,81 @@ const App = ({ className }: AppProps) => {
         </>
     );
 };
+
+/**
+ * Saves the contents of the active tab to the file.
+ * @param {FileTabData} tab - The tab to save.
+ * @param {string | null} fileNamePath - The name and path of the file to save.
+ * @returns {Promise<boolean>} A value indicating whether the file contents were saved successfully.
+ */
+const saveTab = async (
+    activeTabKey: number,
+    fileTabs: FileTabData[],
+    translate: LocalizeFunction,
+    saveAppStateReload: () => Promise<void>,
+    notification: (type: NotificationType, title: string | null | undefined | Error | unknown, duration?: number) => void
+): Promise<boolean> => {
+    const index = fileTabs.findIndex(f => f.uid === activeTabKey);
+    if (index !== -1) {
+        const tab = fileTabs[index];
+        if (tab.file_name_path === null) {
+            try {
+                const fileName = await save(getDialogFilter(translate, tab));
+                if (fileName) {
+                    try {
+                        try {
+                            await saveFileContents(tab, fileName);
+                            await saveAppStateReload();
+                        } catch (error) {
+                            notification("error", error);
+                            return false;
+                        }
+                    } catch (error) {
+                        notification("error", error);
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } catch (error) {
+                notification("error", error);
+                return false;
+            }
+        } else {
+            try {
+                await saveFileContents(tab, tab.file_name_path);
+                await saveAppStateReload();
+            } catch (error) {
+                notification("error", error);
+                return false;
+            }
+        }
+    }
+
+    return true;
+};
+
+/**
+ * Returns the save dialog filter.
+ * @param {FileTabData} data - The file tab data.
+ * @returns {SaveDialogOptions} The save dialog filter.
+ */
+const getDialogFilter = (translate: LocalizeFunction, data: FileTabData): SaveDialogOptions => {
+    const result: SaveDialogOptions =
+        data.script_language === "typescript"
+            ? { filters: [{ name: translate("typeScriptFiles", "TypeScript files"), extensions: ["ts"] }] }
+            : { filters: [{ name: translate("javaScriptFiles", "JavaScript files"), extensions: ["js"] }] };
+
+    result.defaultPath = data.file_name_path ?? data.file_name;
+
+    return result;
+};
+
+/**
+ * Returns the open dialog filter.
+ * @returns {OpenDialogOptions} The open dialog filter.
+ */
+const getOpenDialogFilter = (translate: LocalizeFunction) => ({ filters: [{ name: translate("scriptFiles", "Script Files"), extensions: ["js", "ts"] }] });
 
 const SyledApp = styled(App)`
     height: 100%;

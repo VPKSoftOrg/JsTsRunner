@@ -27,5 +27,13 @@
     "result": "Result",
     "openFile": "Open file",
     "scriptFiles": "Script files",
-    "reloadFromDisk": "Reload file from disk"
+    "reloadFromDisk": "Reload file from disk",
+    "attributionAndCopyright": "Attribution and copyright",
+    "icons": "Icons",
+    "save": "Save",
+    "saveAs": "Save as",
+    "typeScriptFiles": "TypeScript files",
+    "javaScriptFiles": "JavaScript files",
+    "codeMenu": "Code",
+    "evaluateCode": "Evaluate code"
 }

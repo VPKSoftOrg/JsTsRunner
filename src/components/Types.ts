@@ -23,11 +23,13 @@ type FileTabData = {
     /** A flag indicating whether the file is temporary. */
     is_temporary: boolean;
     /** The language of the script. */
-    script_language: string;
+    script_language: ScriptType;
     /** The content of the file. */
     content: string | null;
     /** The last modified date of the file. */
     modified_at: Date | null;
+    /** The last modified date of the file in the application state. */
+    modified_at_state: Date | null;
 };
 
 type ScriptType = "typescript" | "javascript";

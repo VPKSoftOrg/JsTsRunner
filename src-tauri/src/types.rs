@@ -78,4 +78,6 @@ pub struct FileTabData {
     pub content: Option<String>,
     /// The last modified date of the file.
     pub modified_at: Option<DateTime<Utc>>,
+    /// A flag indicating if the file differs from the file system.
+    pub modified_at_state: Option<DateTime<Utc>>,
 }

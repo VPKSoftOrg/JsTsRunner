@@ -2,5 +2,6 @@
     "updateCheckFailedFile": "File open failed with message '{{error}}'.",
     "newFileWithIndex": "New file {{index}}",
     "currentMustBeTsFile": "The current file type must be a TypeScript file in order to convert it to JavaScript.",
-    "fileHasBeenChangedReload": "The file '{{file}}' has been changed. Reload the file to see the changed contents."
+    "fileHasBeenChangedReload": "The file '{{file}}' has been changed. Reload the file to see the changed contents.",
+    "saveFileBeforeClose": "Save the file '{{file}}' before closing it?"
 }
