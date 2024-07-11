@@ -30,12 +30,11 @@ import { Editor } from "@monaco-editor/react";
 import { CommonProps, FileTabData, ScriptType } from "../Types";
 import { useDebounce } from "../../hooks/useDebounce";
 import { JavaScriptLogo, TypeScriptLogo } from "../../utilities/app/Images";
-import { transpileTypeSctiptToJs } from "../../utilities/app/TypeSciptTranspile";
 import { ConfirmPopup } from "../popups/ConfirmPopup";
 import { DialogButtons, DialogResult, PopupType } from "../Enums";
 import { useTranslate } from "../../localization/Localization";
 import { NotificationType } from "../../utilities/app/Notify";
-import { getAppState, runScript } from "./TauriWrappers";
+import { evalueateValue } from "../../utilities/app/Code";
 
 /**
  * The props for the {@link TabbedEditor} component.
@@ -132,44 +131,22 @@ const TabbedEditorComponent = ({
         }
     }, [fileTabs, activeTabKey, setActiveTabKey]);
 
-    const evalueateValue = React.useCallback(async () => {
+    const evalueateCallback = React.useCallback(async () => {
         const tab = fileTabs.find(f => f.uid === activeTabKey);
         const editorValue = tab?.content;
         if (editorValue !== undefined && editorValue !== null) {
-            const scriptValue = editorValue;
-            let script = "";
-            if (activeTabScriptType === "typescript") {
-                try {
-                    script = transpileTypeSctiptToJs(editorValue, true);
-                } catch (error) {
-                    onNewOutput(`${error}`);
-                    return;
-                }
-            } else {
-                script = scriptValue;
-            }
-            let value: string = "";
-
+            let value = "";
             try {
-                value = await runScript(script);
+                value = await evalueateValue(editorValue, activeTabScriptType);
             } catch (error) {
-                value = `${error}`;
-            }
-
-            try {
-                const appState = await getAppState();
-                if (appState.log_stack.length > 0) {
-                    value = appState.log_stack.join("\n") + "\n" + value;
-                }
-            } catch (error) {
-                value = `${error}`;
+                notification("error", error);
             }
 
             onNewOutput(value);
         }
-    }, [activeTabKey, activeTabScriptType, fileTabs, onNewOutput]);
+    }, [activeTabKey, activeTabScriptType, fileTabs, notification, onNewOutput]);
 
-    useDebounce(evalueateValue, 1_500);
+    useDebounce(evalueateCallback, 1_500);
 
     const removeTabByKey = React.useCallback(
         (key: number) => {

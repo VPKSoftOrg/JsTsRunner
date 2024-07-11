@@ -33,5 +33,7 @@
     "save": "Save",
     "saveAs": "Save as",
     "typeScriptFiles": "TypeScript files",
-    "javaScriptFiles": "JavaScript files"
+    "javaScriptFiles": "JavaScript files",
+    "codeMenu": "Code",
+    "evaluateCode": "Evaluate code"
 }

@@ -33,5 +33,7 @@
     "save": "Tallenna",
     "saveAs": "Tallenna nimellä",
     "typeScriptFiles": "TypeScript-tiedostot",
-    "javaScriptFiles": "JavaScript-tiedostot"
+    "javaScriptFiles": "JavaScript-tiedostot",
+    "codeMenu": "Koodi",
+    "evaluateCode": "Suorita koodi"
 }
