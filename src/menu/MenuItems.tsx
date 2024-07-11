@@ -1,7 +1,7 @@
 //@ts-expect-error - React is required for JSX
 import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFile, faDoorOpen, faCircleQuestion, faInfo, faGear, faFolderOpen, faArrowsRotate, faPlay, faCodeFork } from "@fortawesome/free-solid-svg-icons";
+import { faFile, faDoorOpen, faCircleQuestion, faInfo, faGear, faFolderOpen, faArrowsRotate, faPlay, faCodeFork, faCode } from "@fortawesome/free-solid-svg-icons";
 import { LocalizeFunction } from "../localization/Localization";
 import { SaveAsIcon, SaveIcon } from "../img/ImageExports";
 import { filterUsableMenuItems, ItemTypeShortcut, MenuItems, renderShortcut, SubItemTypeShortcut } from "./AppMenu";
@@ -91,7 +91,7 @@ export const appMenuItems = (localize?: LocalizeFunction, darkMode?: boolean, di
         {
             key: "codeMenu",
             label: localize?.("codeMenu") ?? "Code",
-            icon: <FontAwesomeIcon icon={faGear} />,
+            icon: <FontAwesomeIcon icon={faCode} />,
             disabled: disabledItems?.includes("codeMenu"),
             children: [
                 {
