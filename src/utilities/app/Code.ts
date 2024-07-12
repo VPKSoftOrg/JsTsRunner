@@ -22,14 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import { getAppState, runScript } from "../../components/app/TauriWrappers";
+import { getAppState, runScript, runScriptLineByLine } from "../../components/app/TauriWrappers";
 import { ScriptType } from "../../components/Types";
+import { LocalizeFunction } from "../../localization/Localization";
 import { transpileTypeSctiptToJs } from "./TypeSciptTranspile";
 
-const evalueateValue = async (content: string | undefined | null, scriptType: ScriptType) => {
+const evalueateValue = async (content: string | undefined | null, skipUndefined: boolean, scriptType: ScriptType) => {
     if (content !== undefined && content !== null) {
         const scriptValue = content;
         let script = "";
+
         if (scriptType === "typescript") {
             try {
                 script = transpileTypeSctiptToJs(content, true);
@@ -56,10 +58,72 @@ const evalueateValue = async (content: string | undefined | null, scriptType: Sc
             value = `${error}`;
         }
 
-        return value;
+        return skipUndefined && value === "undefined" ? "" : value;
     }
 
     return "";
 };
 
-export { evalueateValue };
+const evalueateValueByLines = async (content: string | undefined | null, skipUndefined: boolean, skipEmptyLines: boolean, scriptType: ScriptType, translate: LocalizeFunction) => {
+    if (content !== undefined && content !== null) {
+        const scriptValue = content;
+        let script: string[] = [];
+        if (scriptType === "typescript") {
+            const scriptLines = content.split("\n");
+            for (let i = 0; i < scriptLines.length; i++) {
+                try {
+                    scriptLines[i] = transpileTypeSctiptToJs(scriptLines[i], true);
+                } catch (error) {
+                    scriptLines[i] = `${error}`;
+                }
+            }
+            script = scriptLines;
+        } else {
+            script = scriptValue.split("\n");
+        }
+        let value: string[] = [];
+
+        try {
+            value = await runScriptLineByLine(script);
+        } catch (error) {
+            value = [`${error}`];
+        }
+
+        for (let i = 0; i < value.length; i++) {
+            if (skipUndefined && value[i] === "undefined") {
+                value[i] = "";
+            }
+        }
+
+        try {
+            const appState = await getAppState();
+
+            for (const line of appState.log_stack_lines) {
+                if (line.line_number >= 0 && line.line_number < value.length) {
+                    value[line.line_number] += line.lines.join(" ");
+                }
+            }
+        } catch (error) {
+            value = [`${error}`];
+        }
+
+        let line = 1;
+        if (skipEmptyLines) {
+            for (let i = 0; i < value.length; i++) {
+                if (value[i] === "") {
+                    value.splice(i, 1);
+                    i--;
+                } else {
+                    value[i] = `${translate("line", "Line")}: ${line.toString().padStart(2, " ")}. ${value[i]}`;
+                }
+                line++;
+            }
+        }
+
+        return value;
+    }
+
+    return [];
+};
+
+export { evalueateValue, evalueateValueByLines };

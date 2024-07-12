@@ -60,6 +60,7 @@ pub async fn run() {
             save_settings,
             get_app_state,
             run_script,
+            run_script_line_by_line,
             save_open_tabs,
             add_new_tab,
             update_open_tabs,
@@ -96,6 +97,15 @@ async fn save_settings(config: AppConfig) -> bool {
 #[tauri::command]
 async fn run_script(code: String, app_state: State<'_, AppState>) -> Result<String, String> {
     TauriCommands::run_script(code, app_state).await
+}
+
+/// See [TauriCommands::run_script_line_by_line]
+#[tauri::command]
+async fn run_script_line_by_line(
+    code: Vec<String>,
+    app_state: State<'_, AppState>,
+) -> Result<Vec<String>, String> {
+    TauriCommands::run_script_line_by_line(code, app_state).await
 }
 
 /// See [TauriCommands::save_open_tabs]

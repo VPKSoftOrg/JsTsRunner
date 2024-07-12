@@ -35,5 +35,7 @@
     "typeScriptFiles": "TypeScript files",
     "javaScriptFiles": "JavaScript files",
     "codeMenu": "Code",
-    "evaluateCode": "Evaluate code"
+    "evaluateCode": "Evaluate code",
+    "oneLineEvaluation": "One line evaluation mode",
+    "line": "Line"
 }

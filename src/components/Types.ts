@@ -30,6 +30,8 @@ type FileTabData = {
     modified_at: Date | null;
     /** The last modified date of the file in the application state. */
     modified_at_state: Date | null;
+    /** A flag indicating whether to evaluate each line separately or the entire file content at once. */
+    evalueate_per_line: boolean;
 };
 
 type ScriptType = "typescript" | "javascript";

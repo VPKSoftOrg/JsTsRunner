@@ -1,7 +1,7 @@
 //@ts-expect-error - React is required for JSX
 import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowsRotate, faCodeFork, faDoorOpen, faGear, faInfo, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsRotate, faCodeFork, faDoorOpen, faGear, faInfo, faListOl, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { LocalizeFunction } from "../localization/Localization";
 
 import { SaveAsIcon, SaveIcon } from "../img/ImageExports";
@@ -90,6 +90,16 @@ export const appToolbarItems = (localize?: LocalizeFunction, darkMode?: boolean,
         clickActionObject: "saveAs",
         type: "button",
         disabled: disabledItems?.includes("saveAs"),
+    },
+    "|",
+    {
+        icon: <FontAwesomeIcon icon={faListOl} />,
+        title: localize?.("oneLineEvaluation") ?? "One line evaluation",
+        tooltipTitle: localize?.("oneLineEvaluation") ?? "One line evaluation",
+        clickActionObject: "oneLineEvaluation",
+        type: "toggle",
+        disabled: disabledItems?.includes("oneLineEvaluation"),
+        name: "oneLineEvaluation",
     },
 ];
 

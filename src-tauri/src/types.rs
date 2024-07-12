@@ -27,10 +27,18 @@ use std::sync::Mutex;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct LineByLineLog {
+    pub line_number: i32,
+    pub lines: Vec<String>,
+}
+
 /// The application state for the Tauri application.
 pub struct AppState {
     /// The log stack for the run script.
     pub log_stack: Mutex<Vec<String>>,
+    /// The log stack lines for the run script.
+    pub log_stack_lines: Mutex<Vec<LineByLineLog>>,
     /// The index of the next file.
     pub file_ids: Mutex<Vec<i32>>,
     /// The file tabs currently open.
@@ -44,6 +52,7 @@ impl ::std::default::Default for AppState {
             log_stack: Mutex::new(vec![]),
             file_ids: Mutex::new(vec![]),
             file_tabs: Mutex::new(vec![]),
+            log_stack_lines: Mutex::new(vec![]),
         }
     }
 }
@@ -53,6 +62,8 @@ impl ::std::default::Default for AppState {
 pub struct AppStateResult {
     /// The log stack for the run script.
     pub log_stack: Vec<String>,
+    /// The log stack lines for the run script.
+    pub log_stack_lines: Vec<LineByLineLog>,
     /// The index of the next file.
     pub file_ids: Vec<i32>,
     /// The file tabs currently open.
@@ -80,4 +91,6 @@ pub struct FileTabData {
     pub modified_at: Option<DateTime<Utc>>,
     /// A flag indicating if the file differs from the file system.
     pub modified_at_state: Option<DateTime<Utc>>,
+    /** A flag indicating whether to evaluate each line separately or the entire file content at once. */
+    pub evalueate_per_line: bool,
 }

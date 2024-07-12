@@ -34,7 +34,7 @@ import { ConfirmPopup } from "../popups/ConfirmPopup";
 import { DialogButtons, DialogResult, PopupType } from "../Enums";
 import { useTranslate } from "../../localization/Localization";
 import { NotificationType } from "../../utilities/app/Notify";
-import { evalueateValue } from "../../utilities/app/Code";
+import { evalueateValue, evalueateValueByLines } from "../../utilities/app/Code";
 
 /**
  * The props for the {@link TabbedEditor} component.
@@ -48,7 +48,7 @@ type TabbedEditorProps = {
     saveFileTabs: () => void;
     setActiveTabScriptType: (scriptType: ScriptType) => void;
     setFileTabs: (fileTabs: FileTabData[]) => void;
-    onNewOutput: (output: string) => void;
+    onNewOutput: (output: string | string[]) => void;
     saveTab: (activeTabKey: number) => Promise<boolean>;
     notification: (type: NotificationType, title: string | null | undefined | Error | unknown, duration?: number) => void;
 } & CommonProps;
@@ -134,17 +134,18 @@ const TabbedEditorComponent = ({
     const evalueateCallback = React.useCallback(async () => {
         const tab = fileTabs.find(f => f.uid === activeTabKey);
         const editorValue = tab?.content;
-        if (editorValue !== undefined && editorValue !== null) {
-            let value = "";
+        if (editorValue !== undefined && editorValue !== null && tab !== undefined) {
+            let value: string | string[] = "";
+
             try {
-                value = await evalueateValue(editorValue, activeTabScriptType);
+                value = await (tab?.evalueate_per_line ? evalueateValueByLines(editorValue, true, true, tab.script_language, translate) : evalueateValue(editorValue, true, tab.script_language));
             } catch (error) {
                 notification("error", error);
             }
 
             onNewOutput(value);
         }
-    }, [activeTabKey, activeTabScriptType, fileTabs, notification, onNewOutput]);
+    }, [activeTabKey, fileTabs, notification, onNewOutput, translate]);
 
     useDebounce(evalueateCallback, 1_500);
 
