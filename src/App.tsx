@@ -550,7 +550,6 @@ const App = ({ className }: AppProps) => {
                     <TabbedEditor //
                         darkMode={previewDarkMode ?? settings.dark_mode ?? false}
                         onNewOutput={onNewOutput}
-                        activeTabScriptType={selectedValues["language"] as ScriptType}
                         fileTabs={fileTabs}
                         activeTabKey={activeTabKey}
                         setActiveTabKey={setActiveTabKey}

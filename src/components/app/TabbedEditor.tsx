@@ -42,7 +42,6 @@ import { evalueateValue, evalueateValueByLines } from "../../utilities/app/Code"
 type TabbedEditorProps = {
     darkMode: boolean;
     fileTabs: FileTabData[];
-    activeTabScriptType: ScriptType;
     activeTabKey: number;
     setActiveTabKey: (value: number) => void;
     saveFileTabs: () => void;
@@ -62,7 +61,6 @@ const TabbedEditorComponent = ({
     className, //
     darkMode,
     fileTabs = [],
-    activeTabScriptType,
     activeTabKey,
     setActiveTabKey,
     saveFileTabs,
