@@ -199,9 +199,9 @@ const App = ({ className }: AppProps) => {
     // A debounced callback to save the current file tabs.
     const saveFileTabs = React.useCallback(() => {
         if (!appStateLoaded.current || !settingsLoaded) {
-            return;
+            return Promise.resolve();
         }
-        void updateOpenTabs(fileTabs)
+        return updateOpenTabs(fileTabs)
             .then(() => {
                 void saveOpenTabs().catch(error => notification("error", error));
             })
@@ -212,9 +212,24 @@ const App = ({ className }: AppProps) => {
     useDebounce(saveFileTabs, 5_000); // TODO::Make this configurable
 
     // A callback to close the application returning always false to not to prevent the app from closing.
-    const onClose = React.useCallback(() => {
+    const onClose = React.useCallback(async () => {
+        const saveTabsPromise = saveFileTabs();
+        const updateSettingsPromise = () => {
+            if (settings) {
+                return updateSettings(settings);
+            }
+
+            return Promise.resolve();
+        };
+
+        try {
+            await Promise.all([saveTabsPromise, updateSettingsPromise()]);
+        } catch (error) {
+            notification("error", error);
+        }
+
         return false;
-    }, []);
+    }, [notification, saveFileTabs, settings, updateSettings]);
 
     // A callback to to set the about popup hidden when closed.
     const aboutPopupClose = React.useCallback(() => {
@@ -299,7 +314,11 @@ const App = ({ className }: AppProps) => {
             const keyValue = key as MenuKeys;
             switch (keyValue) {
                 case "exitMenu": {
-                    void appWindow.close();
+                    void Promise.resolve(onClose()).then(result => {
+                        if (!result) {
+                            void appWindow.close();
+                        }
+                    });
                     break;
                 }
                 case "aboutMenu": {
@@ -411,6 +430,7 @@ const App = ({ className }: AppProps) => {
             evaluateActiveCode,
             fileTabs,
             notification,
+            onClose,
             openExistingFileWrapped,
             reloadCurrentFileContents,
             saveAppStateReload,
@@ -504,7 +524,7 @@ const App = ({ className }: AppProps) => {
         return () => {
             void unlisten();
         };
-    }, [appWindow]);
+    }, [appWindow, notification, saveFileTabs, settings, updateSettings]);
 
     // A callback after the reload confirm popup is closed and a result from the popup is received.
     const onReloadConfirmClose = React.useCallback(
