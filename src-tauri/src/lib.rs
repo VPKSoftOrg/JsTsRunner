@@ -68,7 +68,9 @@ pub async fn run() {
             get_new_tab_id,
             open_existing_file,
             is_file_changed_in_fs,
+            is_existing_file_missing_in_fs,
             reload_file_contents,
+            set_current_file_keep_in_editor,
             save_file_contents
         ])
         .run(tauri::generate_context!())
@@ -162,6 +164,15 @@ async fn is_file_changed_in_fs(
     TauriCommands::is_file_changed_in_fs(data, app_state).await
 }
 
+/// See [TauriCommands::is_existing_file_missing_in_fs]
+#[tauri::command]
+async fn is_existing_file_missing_in_fs(
+    data: FileTabData,
+    app_state: State<'_, AppState>,
+) -> Result<bool, String> {
+    TauriCommands::is_existing_file_missing_in_fs(data, app_state).await
+}
+
 /// See [TauriCommands::reload_file_contents]
 #[tauri::command]
 async fn reload_file_contents(
@@ -169,6 +180,15 @@ async fn reload_file_contents(
     app_state: State<'_, AppState>,
 ) -> Result<bool, String> {
     TauriCommands::reload_file_contents(data, app_state).await
+}
+
+/// See [TauriCommands::set_current_file_keep_in_editor]
+#[tauri::command]
+async fn set_current_file_keep_in_editor(
+    data: FileTabData,
+    app_state: State<'_, AppState>,
+) -> Result<bool, String> {
+    TauriCommands::set_current_file_keep_in_editor(data, app_state).await
 }
 
 /// See [TauriCommands::save_file_contents]
