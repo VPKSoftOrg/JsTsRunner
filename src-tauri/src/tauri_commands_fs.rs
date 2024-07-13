@@ -128,6 +128,64 @@ impl TauriCommands {
         Ok(modified_at != tab.modified_at)
     }
 
+    /// Checks if the file in the application state is missing in the file system.
+    ///
+    /// # Arguments
+    /// `data` - The file data to check.
+    /// `app_state` - The Tauri application state.
+    ///
+    /// # Returns
+    /// `true` if the file is missing in the file system; `false` otherwise;
+    ///
+    /// Error if the file was not found in the application state or an internal error occurred.
+    pub async fn is_existing_file_missing_in_fs(
+        data: FileTabData,
+        app_state: State<'_, AppState>,
+    ) -> Result<bool, String> {
+        let tab = match app_state.file_tabs.lock() {
+            Ok(tabs) => {
+                let tab = tabs.iter().find(|tab| tab.uid == data.uid);
+                match tab {
+                    Some(tab) => FileTabData {
+                        uid: tab.uid,
+                        path: tab.path.clone(),
+                        file_name: tab.file_name.clone(),
+                        is_temporary: tab.is_temporary,
+                        script_language: tab.script_language.clone(),
+                        content: None,
+                        modified_at: tab.modified_at.clone(),
+                        file_name_path: tab.file_name_path.clone(),
+                        modified_at_state: tab.modified_at_state.clone(),
+                        evalueate_per_line: tab.evalueate_per_line,
+                    },
+                    None => {
+                        return Err("Failed to find the file in application state.".to_string());
+                    }
+                }
+            }
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        };
+
+        let path = tab.file_name_path.clone().unwrap();
+        let path = path.as_str();
+        let path = Path::new(path);
+
+        let exists = match Path::try_exists(path) {
+            Ok(exists) => exists,
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        };
+
+        if !tab.is_temporary && tab.file_name_path.is_some() && !exists {
+            return Ok(true);
+        } else {
+            return Ok(false);
+        }
+    }
+
     /// Opens an existing file in the application state.
     ///
     /// # Arguments
@@ -246,6 +304,11 @@ impl TauriCommands {
 
                 match tab {
                     Some(tab) => {
+                        // Temporary files cannot be reloaded
+                        if tab.is_temporary {
+                            return Ok(false);
+                        }
+
                         let file_name_path = match &tab.file_name_path {
                             Some(file_name_path) => file_name_path.clone(),
 
@@ -289,6 +352,33 @@ impl TauriCommands {
                 return Err(e.to_string());
             }
         }
+        Ok(true)
+    }
+
+    pub async fn set_current_file_keep_in_editor(
+        data: FileTabData,
+        app_state: State<'_, AppState>,
+    ) -> Result<bool, String> {
+        match app_state.file_tabs.lock() {
+            Ok(mut tabs) => {
+                let tab = tabs.iter_mut().find(|tab| tab.uid == data.uid);
+
+                match tab {
+                    Some(tab) => {
+                        tab.is_temporary = true;
+                        tab.modified_at = None;
+                        tab.modified_at_state = Some(Utc::now());
+                    }
+                    None => {
+                        return Err("Failed to find the file in application state.".to_string());
+                    }
+                }
+            }
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        };
+
         Ok(true)
     }
 

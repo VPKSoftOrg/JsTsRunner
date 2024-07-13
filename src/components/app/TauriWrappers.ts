@@ -173,6 +173,25 @@ const isFileChangedInFs = async (data: FileTabData): Promise<boolean> => {
 };
 
 /**
+ * Checks if an existing file is missing in the file system using the Tauri API call.
+ * @param {FileTabData} data - The file data to check.
+ * @returns {Promise<boolean>} A value indicating whether the existing file is missing in the file system.
+ * @throws {Error} If the Tauri API call fails.
+ */
+const isExistingFileMissingInFs = async (data: FileTabData): Promise<boolean> => {
+    // Don't bother for an API call if the file is not temporary.
+    if (data.is_temporary) {
+        return false;
+    }
+
+    try {
+        return await invoke("is_existing_file_missing_in_fs", { data });
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
+/**
  * Reloads the file contents using the Tauri API call.
  * @param {FileTabData} data - The file data to reload.
  * @returns {Promise<boolean>} A value indicating whether the file contents were reloaded successfully.
@@ -181,6 +200,14 @@ const isFileChangedInFs = async (data: FileTabData): Promise<boolean> => {
 const reloadFileContents = async (data: FileTabData) => {
     try {
         return await invoke("reload_file_contents", { data });
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
+const setKeepCurrentFileInEditor = async (data: FileTabData) => {
+    try {
+        return await invoke("set_current_file_keep_in_editor", { data });
     } catch (error) {
         throw new Error(`${error}`);
     }
@@ -213,7 +240,9 @@ export {
     getNewTabId,
     openExistingFile,
     isFileChangedInFs,
+    isExistingFileMissingInFs,
     reloadFileContents,
+    setKeepCurrentFileInEditor,
     saveFileContents,
 };
 

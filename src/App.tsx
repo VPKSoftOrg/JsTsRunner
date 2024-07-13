@@ -5,6 +5,7 @@ import "./App.css";
 import classNames from "classnames";
 import { getCurrent } from "@tauri-apps/api/window";
 import { open, save, SaveDialogOptions } from "@tauri-apps/plugin-dialog";
+import { UnlistenFn } from "@tauri-apps/api/event";
 import { StyledTitle } from "./components/app/WindowTitle";
 import { LocalizeFunction, useTranslate } from "./localization/Localization";
 import { MenuKeys } from "./menu/MenuItems";
@@ -21,12 +22,14 @@ import {
     addNewTab,
     getAppState,
     getNewTabId,
+    isExistingFileMissingInFs,
     isFileChangedInFs,
     loadFileState,
     openExistingFile,
     reloadFileContents,
     saveFileContents,
     saveOpenTabs,
+    setKeepCurrentFileInEditor,
     updateOpenTabs,
 } from "./components/app/TauriWrappers";
 import { NotificationType, useNotify } from "./utilities/app/Notify";
@@ -66,9 +69,10 @@ const App = ({ className }: AppProps) => {
     const [activeTabKey, setActiveTabKey] = React.useState(0);
     const [disabledItems, setDisabledItems] = React.useState<(MenuKeys | ToolBarItems)[]>([]);
     const [reloadConfirmVisible, setReloadConfirmVisible] = React.useState(false);
+    const [keepFileInEditorVisible, setKeepFileInEditorVisible] = React.useState(false);
 
     const fileNameRef = React.useRef<string>("");
-    const previousFocusedRef = React.useRef<boolean>(false);
+    const lostFileNameRef = React.useRef<string>("");
 
     const setSelectedValue = React.useCallback(
         (key: "language" | "oneLineEvaluation", value: unknown) => {
@@ -100,7 +104,6 @@ const App = ({ className }: AppProps) => {
     const evaluateActiveCode = React.useCallback(() => {
         if (activeTabKey) {
             const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
-
             if (tabScript && settings) {
                 if (tabScript.evalueate_per_line) {
                     evalueateValueByLines(tabScript.content, settings.skip_undefined_on_js, settings.skip_empty_on_js, tabScript.script_language)
@@ -153,6 +156,20 @@ const App = ({ className }: AppProps) => {
         }
     }, [fileTabs, activeTabKey, notification]);
 
+    const checkFileLostFs = React.useCallback(() => {
+        const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
+        if (tabScript) {
+            isExistingFileMissingInFs(tabScript)
+                .then(result => {
+                    if (result) {
+                        lostFileNameRef.current = tabScript.file_name;
+                        setKeepFileInEditorVisible(true);
+                    }
+                })
+                .catch(error => notification("error", error));
+        }
+    }, [fileTabs, activeTabKey, notification]);
+
     // Enable or disable the specified menu or toolbar item.
     const enableDisableMenuToolbarItem = React.useCallback(
         (mtItem: MenuKeys | ToolBarItems, enabled: boolean) => {
@@ -177,8 +194,9 @@ const App = ({ className }: AppProps) => {
             setSelectedValue("oneLineEvaluation", tabScript.evalueate_per_line);
 
             checkTabFileChanged();
+            checkFileLostFs();
         }
-    }, [activeTabKey, checkTabFileChanged, enableDisableMenuToolbarItem, fileTabs, setSelectedValue]);
+    }, [activeTabKey, checkFileLostFs, checkTabFileChanged, enableDisableMenuToolbarItem, fileTabs, setSelectedValue]);
 
     // Restore the window state.
     React.useEffect(() => {
@@ -443,21 +461,22 @@ const App = ({ className }: AppProps) => {
 
     // An effect to check if the current tab file contents has been changed after the window has been focused.
     React.useEffect(() => {
-        const unlisten = async () =>
-            await appWindow.onFocusChanged(({ payload: focused }) => {
-                if (focused && previousFocusedRef.current !== focused) {
+        let unlisten: UnlistenFn = () => {};
+        appWindow
+            .onFocusChanged(({ payload: focused }) => {
+                if (focused) {
                     checkTabFileChanged();
+                    checkFileLostFs();
                 }
-                previousFocusedRef.current = focused;
-            });
+            })
+            .then(fn => {
+                unlisten = fn;
+            })
+            .catch(error => notification("error", error));
 
         // you need to call unlisten if your handler goes out of scope e.g. the component is unmounted
-        return () => {
-            void unlisten()
-                .then()
-                .catch(error => notification("error", error));
-        };
-    }, [appWindow, checkTabFileChanged, notification]);
+        return () => unlisten();
+    }, [appWindow, checkFileLostFs, checkTabFileChanged, notification]);
 
     // A callback to close the preferences popup.
     const onPreferencesClose = React.useCallback(() => {
@@ -538,6 +557,29 @@ const App = ({ className }: AppProps) => {
         [reloadAppState, reloadCurrentFileContents]
     );
 
+    const keepFileInEditorConfirmClose = React.useCallback(
+        (result: DialogResult) => {
+            setKeepFileInEditorVisible(false);
+            if (result === DialogResult.Yes) {
+                const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
+                if (tabScript) {
+                    setKeepCurrentFileInEditor(tabScript)
+                        .then(() => {
+                            reloadCurrentFileContents();
+                        })
+                        .catch(error => notification("error", error));
+                }
+            } else {
+                const newTabs = [...fileTabs];
+                const index = newTabs.findIndex(f => f.uid === activeTabKey);
+                newTabs.splice(index, 1);
+                setFileTabs(newTabs);
+                void saveFileTabs().catch(error => notification("error", error));
+            }
+        },
+        [activeTabKey, fileTabs, notification, reloadCurrentFileContents, saveFileTabs]
+    );
+
     const evaluateEditorValue = React.useMemo(() => {
         return Array.isArray(evaluationResult) ? evaluationResult.join("\n") : evaluationResult;
     }, [evaluationResult]);
@@ -613,6 +655,13 @@ const App = ({ className }: AppProps) => {
                 message={translate("fileHasBeenChangedReload", "The file '{{file}}' has been changed. Reload the file to see the changed contents.", { file: fileNameRef.current })}
                 buttons={DialogButtons.Yes | DialogButtons.No}
                 onClose={onReloadConfirmClose}
+            />
+            <ConfirmPopup //
+                visible={keepFileInEditorVisible}
+                mode={PopupType.Confirm}
+                message={translate("fileNoLongerExistsKeepInEditor", "The file '{{file}}' no longer exists. Keep the file in the editor?", { file: lostFileNameRef.current })}
+                buttons={DialogButtons.Yes | DialogButtons.No}
+                onClose={keepFileInEditorConfirmClose}
             />
         </>
     );
