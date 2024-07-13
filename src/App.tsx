@@ -558,6 +558,7 @@ const App = ({ className }: AppProps) => {
                         saveFileTabs={saveFileTabs}
                         saveTab={saveFileCallback}
                         notification={notification}
+                        settings={settings}
                     />
                     <div className="EditorResultContainer">
                         {translate("result", "Result")}
