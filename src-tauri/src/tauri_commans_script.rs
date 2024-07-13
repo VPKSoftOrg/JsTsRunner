@@ -180,6 +180,11 @@ impl TauriCommands {
         let mut result_all: Vec<String> = Vec::new();
 
         for i in 0..code.len() {
+            // Skip empty lines
+            if code[i].trim() == "" {
+                continue;
+            }
+
             set_file_line(Some(i as i32));
             let code = code[i].as_str();
 

@@ -101,11 +101,11 @@ const App = ({ className }: AppProps) => {
         if (activeTabKey) {
             const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
 
-            if (tabScript) {
+            if (tabScript && settings) {
                 if (tabScript.evalueate_per_line) {
-                    evalueateValueByLines(tabScript.content, true, true, tabScript.script_language, translate)
+                    evalueateValueByLines(tabScript.content, settings.skip_undefined_on_js, settings.skip_empty_on_js, tabScript.script_language)
                         .then(value => {
-                            setEvaluationResult(value);
+                            setEvaluationResult(value.map(f => `${translate("line", "Line")} ${f}`));
                         })
                         .catch(error => notification("error", error));
                 } else {
@@ -117,7 +117,7 @@ const App = ({ className }: AppProps) => {
                 }
             }
         }
-    }, [activeTabKey, fileTabs, notification, translate]);
+    }, [activeTabKey, fileTabs, notification, settings, translate]);
 
     // Load the initial application state consisting of the file tabs and related data.
     React.useEffect(() => {

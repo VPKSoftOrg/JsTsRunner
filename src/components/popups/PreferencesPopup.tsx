@@ -25,7 +25,7 @@ SOFTWARE.
 import * as React from "react";
 import classNames from "classnames";
 import { styled } from "styled-components";
-import { Button, Checkbox, Modal, Select } from "antd";
+import { Button, Checkbox, Modal, Select, Tooltip } from "antd";
 import { CheckboxChangeEvent } from "antd/es/checkbox";
 import { Settings } from "../../utilities/app/Settings";
 import { CommonProps } from "../Types";
@@ -99,6 +99,20 @@ const PreferencesPopupComponent = ({
         [settingsInternal, toggleDarkMode]
     );
 
+    const setSkipUndefinedOnJs = React.useCallback(
+        (e: CheckboxChangeEvent) => {
+            setSettingsInternal({ ...settingsInternal, skip_undefined_on_js: e.target.checked === true });
+        },
+        [settingsInternal]
+    );
+
+    const setSkipEmptyOnJs = React.useCallback(
+        (e: CheckboxChangeEvent) => {
+            setSettingsInternal({ ...settingsInternal, skip_empty_on_js: e.target.checked === true });
+        },
+        [settingsInternal]
+    );
+
     // The OK button was clicked.
     const onOkClick = React.useCallback(() => {
         void updateSettings(settingsInternal)
@@ -161,6 +175,30 @@ const PreferencesPopupComponent = ({
                                 <Checkbox //
                                     checked={settingsInternal.dark_mode}
                                     onChange={setDarkMode}
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <Tooltip title={translate("skipUndefinedOnCodeEvaluationExplanation")}>
+                                    <div>{translate("skipUndefinedOnCodeEvaluation")}</div>
+                                </Tooltip>
+                            </td>
+                            <td>
+                                <Checkbox //
+                                    checked={settingsInternal.skip_undefined_on_js}
+                                    onChange={setSkipUndefinedOnJs}
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div>{translate("skipEnptyLinesOnResults")}</div>
+                            </td>
+                            <td>
+                                <Checkbox //
+                                    checked={settingsInternal.skip_empty_on_js}
+                                    onChange={setSkipEmptyOnJs}
                                 />
                             </td>
                         </tr>

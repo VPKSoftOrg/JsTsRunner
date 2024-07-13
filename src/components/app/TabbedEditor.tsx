@@ -35,6 +35,7 @@ import { DialogButtons, DialogResult, PopupType } from "../Enums";
 import { useTranslate } from "../../localization/Localization";
 import { NotificationType } from "../../utilities/app/Notify";
 import { evalueateValue, evalueateValueByLines } from "../../utilities/app/Code";
+import { Settings } from "../../utilities/app/Settings";
 
 /**
  * The props for the {@link TabbedEditor} component.
@@ -43,6 +44,7 @@ type TabbedEditorProps = {
     darkMode: boolean;
     fileTabs: FileTabData[];
     activeTabKey: number;
+    settings: Settings | null;
     setActiveTabKey: (value: number) => void;
     saveFileTabs: () => void;
     setActiveTabScriptType: (scriptType: ScriptType) => void;
@@ -62,6 +64,7 @@ const TabbedEditorComponent = ({
     darkMode,
     fileTabs = [],
     activeTabKey,
+    settings,
     setActiveTabKey,
     saveFileTabs,
     setActiveTabScriptType,
@@ -136,14 +139,19 @@ const TabbedEditorComponent = ({
             let value: string | string[] = "";
 
             try {
-                value = await (tab?.evalueate_per_line ? evalueateValueByLines(editorValue, true, true, tab.script_language, translate) : evalueateValue(editorValue, true, tab.script_language));
+                if (tab?.evalueate_per_line && settings) {
+                    value = await evalueateValueByLines(editorValue, settings.skip_undefined_on_js, settings.skip_empty_on_js, tab.script_language);
+                    value = value.map(f => `${translate("line", "Line")} ${f}`);
+                } else {
+                    value = await evalueateValue(editorValue, true, tab.script_language);
+                }
             } catch (error) {
                 notification("error", error);
             }
 
             onNewOutput(value);
         }
-    }, [activeTabKey, fileTabs, notification, onNewOutput, translate]);
+    }, [activeTabKey, fileTabs, notification, onNewOutput, settings, translate]);
 
     useDebounce(evalueateCallback, 1_500);
 

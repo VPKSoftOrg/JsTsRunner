@@ -39,6 +39,10 @@ pub struct AppConfig {
     error: bool,
     /// An error message if one occurred.
     error_message: String,
+    /// A value indicating whether to skip undefined result values on JavaScript / TypeScript evaluation.
+    skip_undefined_on_js: bool,
+    /// A value indicating whether to skip empty result values on JavaScript / TypeScript evaluation.
+    skip_empty_on_js: bool,
 }
 
 // The default value for the application configuration.
@@ -50,6 +54,8 @@ impl ::std::default::Default for AppConfig {
             error: false,
             error_message: "".to_string(),
             dark_mode: false,
+            skip_undefined_on_js: true,
+            skip_empty_on_js: true,
         }
     }
 }

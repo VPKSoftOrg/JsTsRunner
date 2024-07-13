@@ -37,5 +37,6 @@
     "codeMenu": "Code",
     "evaluateCode": "Evaluate code",
     "oneLineEvaluation": "One line evaluation mode",
-    "line": "Line"
+    "line": "Line",
+    "skipEnptyLinesOnResults": "Skip empty lines on results"
 }

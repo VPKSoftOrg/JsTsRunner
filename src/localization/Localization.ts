@@ -6,10 +6,12 @@ import uiEnglish from "../localization/en/ui.json";
 import messagesEnglish from "../localization/en/messages.json";
 import settingsEnglish from "../localization/en/settings.json";
 import dialogEnglish from "../localization/en/dialog.json";
+import longTextsEnglish from "../localization/en/long_texts.json";
 import uiFinnish from "../localization/fi/ui.json";
 import messagesFinnish from "../localization/fi/messages.json";
 import settingsFinnish from "../localization/fi/settings.json";
 import dialogFinnish from "../localization/fi/dialog.json";
+import longTextsFinnish from "../localization/fi/long_texts.json";
 
 const localizationResources = {
     en: {
@@ -17,18 +19,20 @@ const localizationResources = {
         messages: messagesEnglish,
         settings: settingsEnglish,
         dialog: dialogEnglish,
+        longTexts: longTextsEnglish,
     },
     fi: {
         ui: uiFinnish,
         messages: messagesFinnish,
         settings: settingsFinnish,
         dialog: dialogFinnish,
+        longTexts: longTextsFinnish,
     },
 };
 
 export type Locales = keyof typeof localizationResources;
 export type LocalizationResources = keyof (typeof localizationResources)[Locales];
-export type LocalizationNames = keyof typeof uiEnglish | keyof typeof messagesEnglish | keyof typeof settingsEnglish | keyof typeof dialogEnglish;
+export type LocalizationNames = keyof typeof uiEnglish | keyof typeof messagesEnglish | keyof typeof settingsEnglish | keyof typeof dialogEnglish | keyof typeof longTextsEnglish;
 const resourceArray = Object.keys(localizationResources["en"]);
 
 const defaultLanguage: Locales = "en";
@@ -42,10 +46,11 @@ void i18next.use(initReactI18next).init({
 
 /**
  * A localization function returned by the {@link useLocalize} hook.
- * @param {string} entryName The name of the localization key.
+ * @param {LocalizationNames} entryName The name of the localization key.
  * @param {string?} defaultValue A default value if a localization key is not found.
- * @param {object?} params The interpolation parameters for the localization function. E.g. `{ interpolationName: interpolationValue }`.
+ * @param {unknown} params The interpolation parameters for the localization function. E.g. `{ interpolationName: interpolationValue }`.
  * @param {boolean?} escapeValue A value indicating whether the special characters should be escaped with interpolation. The default value is `true`.
+ * @returns {string} The localized string.
  */
 export type LocalizeFunction = (entryName: LocalizationNames, defaultValue?: string, params?: unknown, escapeValue?: boolean) => string;
 

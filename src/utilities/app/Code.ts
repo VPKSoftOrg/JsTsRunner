@@ -24,11 +24,22 @@ SOFTWARE.
 
 import { getAppState, runScript, runScriptLineByLine } from "../../components/app/TauriWrappers";
 import { ScriptType } from "../../components/Types";
-import { LocalizeFunction } from "../../localization/Localization";
 import { transpileTypeSctiptToJs } from "./TypeSciptTranspile";
 
+/**
+ * Evaluates the given JavaScript / TypeScript code and returns the result.
+ * @param {string} content - The JavaScript / TypeScript code to evaluate.
+ * @param {boolean} skipUndefined - Whether to skip undefined result values by returning an empty string instead.
+ * @param {ScriptType} scriptType - The script type. Either "javascript" or "typescript".
+ * @returns {Promise<string>} The result of the evaluation.
+ */
 const evalueateValue = async (content: string | undefined | null, skipUndefined: boolean, scriptType: ScriptType) => {
     if (content !== undefined && content !== null) {
+        // If the content is empty, return an empty string
+        if (content.replaceAll(/\s/g, "") === "") {
+            return "";
+        }
+
         const scriptValue = content;
         let script = "";
 
@@ -64,7 +75,15 @@ const evalueateValue = async (content: string | undefined | null, skipUndefined:
     return "";
 };
 
-const evalueateValueByLines = async (content: string | undefined | null, skipUndefined: boolean, skipEmptyLines: boolean, scriptType: ScriptType, translate: LocalizeFunction) => {
+/**
+ * Evaluates the given JavaScript / TypeScript code line by line and returns the result.
+ * @param {string} content - The JavaScript / TypeScript code to evaluate.
+ * @param {boolean} skipUndefined - Whether to skip undefined result values by returning an empty string instead.
+ * @param {boolean} skipEmptyLines - Whether to skip empty line evaluation in the result.
+ * @param {ScriptType} scriptType - The script type. Either "javascript" or "typescript".
+ * @returns {Promise<string>} The result of the evaluation.
+ */
+const evalueateValueByLines = async (content: string | undefined | null, skipUndefined: boolean, skipEmptyLines: boolean, scriptType: ScriptType) => {
     if (content !== undefined && content !== null) {
         const scriptValue = content;
         let script: string[] = [];
@@ -114,7 +133,7 @@ const evalueateValueByLines = async (content: string | undefined | null, skipUnd
                     value.splice(i, 1);
                     i--;
                 } else {
-                    value[i] = `${translate("line", "Line")}: ${line.toString().padStart(2, " ")}. ${value[i]}`;
+                    value[i] = `${line.toString().padStart(2, " ")}. ${value[i]}`;
                 }
                 line++;
             }

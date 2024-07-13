@@ -37,5 +37,6 @@
     "codeMenu": "Koodi",
     "evaluateCode": "Suorita koodi",
     "oneLineEvaluation": "Yhden rivin suoritus-tila",
-    "line": "Rivi"
+    "line": "Rivi",
+    "skipEnptyLinesOnResults": "Ohita tyhjä rivit tuloksesta"
 }
