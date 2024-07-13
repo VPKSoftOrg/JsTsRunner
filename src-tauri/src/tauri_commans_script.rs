@@ -26,8 +26,9 @@ use tauri::State;
 
 use crate::{
     js_helpers::{
-        clear_log_stack, get_log_stack, js_console_error_capture, js_console_log_capture,
-        js_console_warn_capture,
+        clear_log_stack, get_log_stack, get_log_stack_by_file_line, js_console_error_capture,
+        js_console_error_capture_lines, js_console_log_capture, js_console_log_capture_lines,
+        js_console_warn_capture, js_console_warn_capture_lines, set_file_line,
     },
     tauri_commands::TauriCommands,
     types::AppState,
@@ -121,5 +122,118 @@ impl TauriCommands {
         }
 
         Ok(result)
+    }
+
+    /// Runs the script passed from the frontend.
+    ///
+    /// # Arguments
+    /// `code` - The script code lines to evaluate.
+    /// `app_state` - The Tauri application state.
+    ///
+    /// # Returns
+    /// The result of the script run line by line.    
+    pub async fn run_script_line_by_line(
+        mut code: Vec<String>,
+        app_state: State<'_, AppState>,
+    ) -> Result<Vec<String>, String> {
+        clear_log_stack();
+
+        match app_state.log_stack_lines.lock() {
+            Ok(mut stack) => {
+                *stack = vec![];
+            }
+            Err(_) => {}
+        }
+
+        // The console.log(), console.warn(), and console.error() functions are not
+        // outputted anywhere, so we need to replace them with our own functions.
+        for i in 0..code.len() {
+            code[i] = code[i]
+                .replace("console.log(", "console_log(")
+                .replace("console.warn(", "console_warn(")
+                .replace("console.error(", "console_error(");
+        }
+
+        let isolate = &mut v8::Isolate::new(Default::default());
+
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope);
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        let object_template = v8::ObjectTemplate::new(scope);
+
+        // Bind the console.log() function to a custom capture function which will update the data into the Tauri application state.
+        let function_template = v8::FunctionTemplate::new(scope, js_console_log_capture_lines);
+        let name = v8::String::new(scope, "console_log").unwrap();
+        object_template.set(name.into(), function_template.into());
+        // Bind the console.warn() function to a custom capture function which will update the data into the Tauri application state.
+        let function_template = v8::FunctionTemplate::new(scope, js_console_warn_capture_lines);
+        let name = v8::String::new(scope, "console_warn").unwrap();
+        object_template.set(name.into(), function_template.into());
+        // Bind the console.error() function to a custom capture function which will update the data into the Tauri application state.
+        let function_template = v8::FunctionTemplate::new(scope, js_console_error_capture_lines);
+        let name = v8::String::new(scope, "console_error").unwrap();
+        object_template.set(name.into(), function_template.into());
+
+        let context = v8::Context::new_from_template(scope, object_template);
+
+        let mut result_all: Vec<String> = Vec::new();
+
+        for i in 0..code.len() {
+            // Skip empty lines
+            if code[i].trim() == "" {
+                continue;
+            }
+
+            set_file_line(Some(i as i32));
+            let code = code[i].as_str();
+
+            let scope = &mut v8::ContextScope::new(scope, context);
+
+            let source = match v8::String::new(scope, code) {
+                Some(source) => source,
+                None => {
+                    result_all.push("Failed to create script.".to_string());
+                    continue;
+                }
+            };
+
+            let script = match v8::Script::compile(scope, source, None) {
+                Some(script) => script,
+                None => {
+                    result_all.push("Failed to compile script.".to_string());
+                    continue;
+                }
+            };
+
+            let result = match script.run(scope) {
+                Some(result) => result,
+                None => {
+                    result_all.push("Failed to run script.".to_string());
+                    continue;
+                }
+            };
+
+            let result = match result.to_string(scope) {
+                Some(result) => result.to_rust_string_lossy(scope),
+                None => {
+                    result_all.push(
+                        "Failed to convert compiled script and results to string.".to_string(),
+                    );
+                    continue;
+                }
+            };
+
+            result_all.push(result);
+        }
+
+        match app_state.log_stack_lines.lock() {
+            Ok(mut stack) => *stack = get_log_stack_by_file_line(),
+            Err(_) => {}
+        }
+
+        set_file_line(None);
+
+        Ok(result_all)
     }
 }

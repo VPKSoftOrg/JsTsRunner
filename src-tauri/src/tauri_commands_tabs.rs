@@ -185,6 +185,16 @@ impl TauriCommands {
             }
         };
 
+        let log_stack_lines = match app_state.log_stack_lines.lock() {
+            Ok(lines) => {
+                let log_stack_lines = lines.clone();
+                log_stack_lines
+            }
+            Err(_) => {
+                return Err("Error: Failed to get application state.".to_string());
+            }
+        };
+
         match app_state.log_stack.lock() {
             Ok(stack) => {
                 let log_stack = stack.clone();
@@ -192,6 +202,7 @@ impl TauriCommands {
                     log_stack,
                     file_tabs,
                     file_ids,
+                    log_stack_lines,
                 });
             }
             Err(_) => {

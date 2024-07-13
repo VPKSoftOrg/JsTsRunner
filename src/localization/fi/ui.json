@@ -35,5 +35,8 @@
     "typeScriptFiles": "TypeScript-tiedostot",
     "javaScriptFiles": "JavaScript-tiedostot",
     "codeMenu": "Koodi",
-    "evaluateCode": "Suorita koodi"
+    "evaluateCode": "Suorita koodi",
+    "oneLineEvaluation": "Yhden rivin suoritus-tila",
+    "line": "Rivi",
+    "skipEnptyLinesOnResults": "Ohita tyhjä rivit tuloksesta"
 }

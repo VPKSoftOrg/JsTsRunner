@@ -156,4 +156,5 @@ export type MenuKeys =
     | "save"
     | "saveAs"
     | "codeMenu"
-    | "evaluateCode";
+    | "evaluateCode"
+    | "oneLineEvaluation";

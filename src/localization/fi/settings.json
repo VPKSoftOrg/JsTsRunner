@@ -3,5 +3,6 @@
     "saveFailed": "Asetusten tallennus epäonnistui.",
     "saveSuccess": "Asetukset tallennettiin onnistuneesti.",
     "saveWindowPosition": "Tallenna ikkunan sijainti",
-    "preferences": "Asetukset"
+    "preferences": "Asetukset",
+    "skipUndefinedOnCodeEvaluation": "Ohita undefined-arvot koodin arvioinnissa"
 }

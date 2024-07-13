@@ -1,0 +1,3 @@
+{
+    "skipUndefinedOnCodeEvaluationExplanation": "Skip reporting of undefined code evaluation value of JavaScript / TypeScript as everything results with an undefined value if no actual result value is available. This is the basic functionality of Chromium V8 JavaScript engine."
+}

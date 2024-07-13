@@ -29,13 +29,14 @@ import { FieldNames } from "rc-select/lib/Select";
 import { CommonProps } from "../components/Types";
 import { TooltipObjectButton } from "../components/wrappers/TooltipObjectButton";
 import { SelectWithLabel } from "../components/wrappers/SelectWithLabel";
+import { ToolTipObjectToggleButton } from "../components/wrappers/ToolTipObjectToggleButton";
 
 export type ToolBarItem<T> = {
     icon?: React.ReactNode;
     title: string;
     tooltipTitle: string;
     clickActionObject?: T;
-    type: "button" | "select";
+    type: "button" | "select" | "toggle";
     options?: { value: string; label: string }[] | undefined;
     fieldNames?: FieldNames | undefined;
     name?: string;
@@ -50,10 +51,10 @@ export type ToolBarSeparator = "|";
 export type AppToolbarProps<T> = {
     toolBarItems: (ToolBarItem<T> | ToolBarSeparator)[];
     selectValues: {
-        [key: string]: string;
+        [key: string]: unknown;
     };
-    onItemClick: (item: T) => void;
-    onSelectChange(value: string, name?: string): void;
+    onItemClick: (item: T, checked?: boolean) => void;
+    onSelectChange(value: unknown, name?: string): void;
 } & CommonProps;
 
 // Type quard for tool bar item
@@ -74,8 +75,8 @@ const AppToolbarComponent = <T,>({
     onSelectChange,
 }: AppToolbarProps<T>) => {
     const onClick = React.useCallback(
-        (item: unknown) => {
-            onItemClick(item as T);
+        (item: unknown, checked?: boolean) => {
+            onItemClick(item as T, checked);
         },
         [onItemClick]
     );
@@ -107,9 +108,9 @@ const AppToolbarComponent = <T,>({
  */
 const createToolbarItem = <T,>(
     item: ToolBarItem<T>,
-    onClick: (item: unknown) => void,
-    onSelectChange: (value: string, name?: string) => void,
-    selectValues: { [key: string]: string },
+    onClick: (item: unknown, checked?: boolean) => void,
+    onSelectChange: (value: unknown, name?: string) => void,
+    selectValues: { [key: string]: unknown },
     index: number
 ): JSX.Element => {
     if (item.type === "button") {
@@ -133,7 +134,21 @@ const createToolbarItem = <T,>(
                 fieldNames={item.fieldNames}
                 valueChanged={onSelectChange}
                 name={item.name}
-                value={selectValues[item.name]}
+                value={selectValues[item.name] as string}
+                key={index}
+                disabled={item.disabled}
+            />
+        );
+    }
+
+    if (item.type === "toggle" && item.name) {
+        return (
+            <ToolTipObjectToggleButton //
+                icon={item.icon}
+                tooltipTitle={item.tooltipTitle}
+                objectData={item.clickActionObject}
+                onClick={onClick}
+                checked={selectValues[item.name] as boolean}
                 key={index}
                 disabled={item.disabled}
             />

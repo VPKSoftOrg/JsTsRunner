@@ -3,5 +3,6 @@
     "saveFailed": "Failed to save the settings.",
     "saveSuccess": "Settings were saved successfully.",
     "saveWindowPosition": "Save window position",
-    "preferences": "Preferences"
+    "preferences": "Preferences",
+    "skipUndefinedOnCodeEvaluation": "Skip undefined on code evaluation"
 }

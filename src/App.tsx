@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useState } from "react";
 import { styled } from "styled-components";
 import { Editor } from "@monaco-editor/react";
 import "./App.css";
@@ -36,7 +35,7 @@ import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
 import { ToolBarItems } from "./menu/ToolbarItems";
 import { DialogButtons, DialogResult, PopupType } from "./components/Enums";
 import { ConfirmPopup } from "./components/popups/ConfirmPopup";
-import { evalueateValue } from "./utilities/app/Code";
+import { evalueateValue, evalueateValueByLines } from "./utilities/app/Code";
 
 type AppProps = CommonProps;
 
@@ -57,12 +56,12 @@ const App = ({ className }: AppProps) => {
     );
 
     // State variables.
-    const [evaluationResult, setEvaluationResult] = useState("");
+    const [evaluationResult, setEvaluationResult] = React.useState<string | string[]>("");
     const [aboutPopupVisible, setAboutPopupVisible] = React.useState(false);
     const [preferencesVisible, setPreferencesVisible] = React.useState(false);
     const [settings, settingsLoaded, updateSettings, reloadSettings] = useSettings(settingsErrorCallback);
     const [previewDarkMode, setPreviewDarkMode] = React.useState<boolean | null>(null);
-    const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: string }>({ language: "javascript" });
+    const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: unknown }>({ language: "javascript", oneLineEvaluation: false });
     const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
     const [activeTabKey, setActiveTabKey] = React.useState(0);
     const [disabledItems, setDisabledItems] = React.useState<(MenuKeys | ToolBarItems)[]>([]);
@@ -70,6 +69,18 @@ const App = ({ className }: AppProps) => {
 
     const fileNameRef = React.useRef<string>("");
     const previousFocusedRef = React.useRef<boolean>(false);
+
+    const setSelectedValue = React.useCallback(
+        (key: "language" | "oneLineEvaluation", value: unknown) => {
+            if (selectedValues[key] === value) {
+                return;
+            }
+            const values = { ...selectedValues };
+            values[key] = value;
+            setSelectedValues(values);
+        },
+        [selectedValues]
+    );
 
     // Antd theme-related hooks.
     const { token } = useAntdToken();
@@ -90,21 +101,30 @@ const App = ({ className }: AppProps) => {
         if (activeTabKey) {
             const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
 
-            if (tabScript) {
-                evalueateValue(tabScript.content, tabScript.script_language)
-                    .then(value => {
-                        setEvaluationResult(value);
-                    })
-                    .catch(error => notification("error", error));
+            if (tabScript && settings) {
+                if (tabScript.evalueate_per_line) {
+                    evalueateValueByLines(tabScript.content, settings.skip_undefined_on_js, settings.skip_empty_on_js, tabScript.script_language)
+                        .then(value => {
+                            setEvaluationResult(value.map(f => `${translate("line", "Line")} ${f}`));
+                        })
+                        .catch(error => notification("error", error));
+                } else {
+                    evalueateValue(tabScript.content, true, tabScript.script_language)
+                        .then(value => {
+                            setEvaluationResult(value);
+                        })
+                        .catch(error => notification("error", error));
+                }
             }
         }
-    }, [activeTabKey, fileTabs, notification]);
+    }, [activeTabKey, fileTabs, notification, settings, translate]);
 
     // Load the initial application state consisting of the file tabs and related data.
     React.useEffect(() => {
-        if (appStateLoaded.current && !settingsLoaded) {
+        if (appStateLoaded.current && settingsLoaded) {
             return;
         }
+
         loadFileState()
             .then(() => {
                 getAppState()
@@ -134,23 +154,31 @@ const App = ({ className }: AppProps) => {
     }, [fileTabs, activeTabKey, notification]);
 
     // Enable or disable the specified menu or toolbar item.
-    const enableDisableMenuToolbarItem = React.useCallback((mtItem: MenuKeys | ToolBarItems, enabled: boolean) => {
-        if (enabled) {
-            setDisabledItems(f => f.filter(item => item !== mtItem));
-        } else {
-            setDisabledItems(f => (f.includes(mtItem) ? f : [...f, mtItem]));
-        }
-    }, []);
+    const enableDisableMenuToolbarItem = React.useCallback(
+        (mtItem: MenuKeys | ToolBarItems, enabled: boolean) => {
+            if (enabled) {
+                if (disabledItems.includes(mtItem)) {
+                    setDisabledItems(f => f.filter(item => item !== mtItem));
+                }
+            } else {
+                if (!disabledItems.includes(mtItem)) {
+                    setDisabledItems(f => (f.includes(mtItem) ? f : [...f, mtItem]));
+                }
+            }
+        },
+        [disabledItems]
+    );
 
     // Disable the "Convert to JavaScript" menu item if the currently selected file is not a JavaScript file.
     React.useEffect(() => {
         const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
         if (tabScript) {
             enableDisableMenuToolbarItem("convertToJs", tabScript.script_language === "typescript");
+            setSelectedValue("oneLineEvaluation", tabScript.evalueate_per_line);
 
             checkTabFileChanged();
         }
-    }, [fileTabs, activeTabKey, notification, checkTabFileChanged, enableDisableMenuToolbarItem]);
+    }, [activeTabKey, checkTabFileChanged, enableDisableMenuToolbarItem, fileTabs, setSelectedValue]);
 
     // Restore the window state.
     React.useEffect(() => {
@@ -267,7 +295,7 @@ const App = ({ className }: AppProps) => {
 
     // A callback to handle menu item and toolbar item clicks.
     const onMenuItemClick = React.useCallback(
-        (key: unknown) => {
+        (key: unknown, checked?: boolean) => {
             const keyValue = key as MenuKeys;
             switch (keyValue) {
                 case "exitMenu": {
@@ -308,6 +336,7 @@ const App = ({ className }: AppProps) => {
                                 modified_at: null,
                                 file_name_path: null,
                                 modified_at_state: new Date(),
+                                evalueate_per_line: false,
                             })
                                 .then(() => {
                                     saveAppStateReload().catch(error => notification("error", error));
@@ -359,13 +388,25 @@ const App = ({ className }: AppProps) => {
                     evaluateActiveCode();
                     break;
                 }
+                case "oneLineEvaluation": {
+                    setSelectedValue("oneLineEvaluation", checked ?? false);
+
+                    const tabs = [...fileTabs];
+                    const index = tabs.findIndex(f => f.uid === activeTabKey);
+                    if (index !== -1) {
+                        const tab = fileTabs[index];
+                        tab.evalueate_per_line = !tab.evalueate_per_line;
+                        setFileTabs(tabs);
+                    }
+                    break;
+                }
                 default: {
                     break;
                 }
             }
         },
         [
-            activeTabKey, //
+            activeTabKey,
             appWindow,
             evaluateActiveCode,
             fileTabs,
@@ -375,6 +416,7 @@ const App = ({ className }: AppProps) => {
             saveAppStateReload,
             saveFileCallback,
             selectedValues,
+            setSelectedValue,
             translate,
         ]
     );
@@ -426,7 +468,7 @@ const App = ({ className }: AppProps) => {
 
     // A callback to set the script evaluation result in the state.
     const onNewOutput = React.useCallback(
-        (output: string) => {
+        (output: string | string[]) => {
             setEvaluationResult(output);
         },
         [setEvaluationResult]
@@ -476,6 +518,10 @@ const App = ({ className }: AppProps) => {
         [reloadAppState, reloadCurrentFileContents]
     );
 
+    const evaluateEditorValue = React.useMemo(() => {
+        return Array.isArray(evaluationResult) ? evaluationResult.join("\n") : evaluationResult;
+    }, [evaluationResult]);
+
     // Render loading indicator if the settings and app state are not loaded yet.
     if (!settingsLoaded || settings === null || appStateLoaded.current === false) {
         return <div>Loading...</div>;
@@ -504,7 +550,6 @@ const App = ({ className }: AppProps) => {
                     <TabbedEditor //
                         darkMode={previewDarkMode ?? settings.dark_mode ?? false}
                         onNewOutput={onNewOutput}
-                        activeTabScriptType={selectedValues["language"] as ScriptType}
                         fileTabs={fileTabs}
                         activeTabKey={activeTabKey}
                         setActiveTabKey={setActiveTabKey}
@@ -513,13 +558,14 @@ const App = ({ className }: AppProps) => {
                         saveFileTabs={saveFileTabs}
                         saveTab={saveFileCallback}
                         notification={notification}
+                        settings={settings}
                     />
                     <div className="EditorResultContainer">
                         {translate("result", "Result")}
                         <Editor //
                             theme={previewDarkMode ?? settings.dark_mode ?? false ? "vs-dark" : "light"}
                             className="EditorResult"
-                            value={evaluationResult}
+                            value={evaluateEditorValue}
                         />
                     </div>
                 </div>

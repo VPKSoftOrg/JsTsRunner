@@ -69,23 +69,17 @@ const AppMenu = ({
             });
 
             // Filter out shortcuts that are not for the current platform
-            if ((osType === "macos" && e.metaKey) || (osType !== "macos" && e.ctrlKey)) {
-                keydItems = keydItems.filter(item => {
-                    return item.shortcut?.ctrlOrMeta === true;
-                });
-            }
+            keydItems = keydItems.filter(item => {
+                return (item.shortcut?.ctrlOrMeta ?? false) === (osType === "macos" && e.metaKey) || (osType !== "macos" && e.ctrlKey);
+            });
 
-            if (e.shiftKey) {
-                keydItems = keydItems.filter(item => {
-                    return item.shortcut?.shift === true;
-                });
-            }
+            keydItems = keydItems.filter(item => {
+                return item.shortcut?.shift ?? false === e.shiftKey;
+            });
 
-            if (e.altKey) {
-                keydItems = keydItems.filter(item => {
-                    return item.shortcut?.alt === true;
-                });
-            }
+            keydItems = keydItems.filter(item => {
+                return item.shortcut?.alt ?? false === e.altKey;
+            });
 
             if (keydItems.length > 0) {
                 e.stopPropagation();

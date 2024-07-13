@@ -25,8 +25,14 @@ SOFTWARE.
 import { invoke } from "@tauri-apps/api/core";
 import { FileTabData } from "../Types";
 
+type LineByLineLog = {
+    line_number: number;
+    lines: string[];
+};
+
 type AppStateResult = {
     log_stack: string[];
+    log_stack_lines: LineByLineLog[];
     file_ids: number[];
     file_tabs: FileTabData[];
 };
@@ -40,6 +46,14 @@ type AppStateResult = {
 const runScript = async (code: string): Promise<string> => {
     try {
         return await invoke("run_script", { code });
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
+const runScriptLineByLine = async (code: string[]): Promise<string[]> => {
+    try {
+        return await invoke("run_script_line_by_line", { code });
     } catch (error) {
         throw new Error(`${error}`);
     }
@@ -190,6 +204,7 @@ const saveFileContents = async (data: FileTabData, fileNamePath: string | null) 
 export {
     //
     runScript,
+    runScriptLineByLine,
     getAppState,
     addNewTab,
     saveOpenTabs,
@@ -202,4 +217,4 @@ export {
     saveFileContents,
 };
 
-export type { AppStateResult };
+export type { AppStateResult, LineByLineLog };

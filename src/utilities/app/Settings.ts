@@ -40,6 +40,10 @@ export type Settings = {
     error: boolean;
     /** An error message if one occurred. */
     error_message: string;
+    /** A value indicating whether to skip undefined result values on JavaScript / TypeScript evaluation. */
+    skip_undefined_on_js: boolean;
+    /** A value indicating whether to skip empty result values on JavaScript / TypeScript evaluation. */
+    skip_empty_on_js: boolean;
 };
 
 /**

@@ -69,6 +69,7 @@ impl TauriCommands {
                         modified_at: tab.modified_at.clone(),
                         file_name_path: tab.file_name_path.clone(),
                         modified_at_state: tab.modified_at_state.clone(),
+                        evalueate_per_line: tab.evalueate_per_line,
                     },
                     None => {
                         return Err("Failed to find the file in application state.".to_string());
@@ -192,6 +193,7 @@ impl TauriCommands {
                     modified_at: modified_at,
                     file_name_path: Some(file_name_path),
                     modified_at_state: modified_at,
+                    evalueate_per_line: false,
                 };
                 tab_data
             }

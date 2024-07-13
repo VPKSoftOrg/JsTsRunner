@@ -1,0 +1,3 @@
+{
+    "skipUndefinedOnCodeEvaluationExplanation": "Älä raportoi JavaScriptin / TypeScriptin undefined-arvoa koska jokainen koodi arvioidaan undefined-arvoksi jos oikeaa paluuarvoa ei ole saatavilla. Tämä on perustoiminto Chromium V8 JavaScript-moottorilla."
+}

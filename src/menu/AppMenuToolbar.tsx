@@ -37,11 +37,11 @@ import { appToolbarItems, ToolBarItems } from "./ToolbarItems";
  */
 type AppMenuToolbarProps = {
     selectValues: {
-        [key: string]: string;
+        [key: string]: unknown;
     };
     disabledItems?: (MenuKeys | ToolBarItems)[];
     darkMode?: boolean;
-    onItemClick: (key: MenuKeys) => void;
+    onItemClick: (key: MenuKeys, checked?: boolean) => void;
     onSelectChange(value: string, name?: string): void;
 } & CommonProps;
 
@@ -61,8 +61,8 @@ const AppMenuToolbarComponent = ({
     const { translate } = useTranslate();
 
     const onToolbarItemInternal = React.useCallback(
-        (key: unknown) => {
-            onItemClick(key as MenuKeys);
+        (key: unknown, checked?: boolean) => {
+            onItemClick(key as MenuKeys, checked);
         },
         [onItemClick]
     );
