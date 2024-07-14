@@ -45,7 +45,7 @@ impl TauriCommands {
     /// The result of the script run.
     pub async fn run_script(
         code: String,
-        app_state: State<'_, AppState>,
+        app_state: &State<'_, AppState>,
     ) -> Result<String, String> {
         clear_log_stack();
 
@@ -134,7 +134,7 @@ impl TauriCommands {
     /// The result of the script run line by line.    
     pub async fn run_script_line_by_line(
         mut code: Vec<String>,
-        app_state: State<'_, AppState>,
+        app_state: &State<'_, AppState>,
     ) -> Result<Vec<String>, String> {
         clear_log_stack();
 

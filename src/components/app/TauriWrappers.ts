@@ -35,6 +35,7 @@ type AppStateResult = {
     log_stack_lines: LineByLineLog[];
     file_ids: number[];
     file_tabs: FileTabData[];
+    active_tab_id: number | null;
 };
 
 /**

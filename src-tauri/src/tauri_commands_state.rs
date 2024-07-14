@@ -40,13 +40,22 @@ impl TauriCommands {
     ///
     /// # Returns
     /// `true` if the file state was loaded successfully; Error otherwise.
-    pub async fn load_file_state(app_state: State<'_, AppState>) -> Result<bool, String> {
+    pub async fn load_file_state(app_state: &State<'_, AppState>) -> Result<bool, String> {
         let mut state = match get_file_state() {
             Ok(v) => v,
             Err(e) => {
                 return Err(e);
             }
         };
+
+        match app_state.active_tab_id.lock() {
+            Ok(mut uid) => {
+                *uid = state.active_tab_id;
+            }
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        }
 
         match app_state.file_ids.lock() {
             Ok(mut ids) => {
@@ -92,7 +101,7 @@ impl TauriCommands {
     ///
     /// # Returns
     /// The new tab unique id.
-    pub async fn get_new_tab_id(app_state: State<'_, AppState>) -> Result<i32, String> {
+    pub async fn get_new_tab_id(app_state: &State<'_, AppState>) -> Result<i32, String> {
         match app_state.file_ids.lock() {
             Ok(ids) => {
                 let new_ids: Vec<i32> = ids.clone();

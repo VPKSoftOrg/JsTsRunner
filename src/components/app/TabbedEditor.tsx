@@ -232,6 +232,7 @@ const TabbedEditorComponent = ({
             <Tabs //
                 className={classNames(TabbedEditor.name, className)}
                 items={tabItems}
+                activeKey={activeTabKey.toString()}
                 type="editable-card"
                 hideAdd
                 onChange={onTabChange}

@@ -43,6 +43,8 @@ pub struct AppState {
     pub file_ids: Mutex<Vec<i32>>,
     /// The file tabs currently open.
     pub file_tabs: Mutex<Vec<FileTabData>>,
+    /// The identifier of the active tab.
+    pub active_tab_id: Mutex<Option<i32>>,
 }
 
 /// The application default state for the Tauri application.
@@ -53,6 +55,7 @@ impl ::std::default::Default for AppState {
             file_ids: Mutex::new(vec![]),
             file_tabs: Mutex::new(vec![]),
             log_stack_lines: Mutex::new(vec![]),
+            active_tab_id: Mutex::new(None),
         }
     }
 }
@@ -68,6 +71,8 @@ pub struct AppStateResult {
     pub file_ids: Vec<i32>,
     /// The file tabs currently open.
     pub file_tabs: Vec<FileTabData>,
+    /// The identifier of the active tab.
+    pub active_tab_id: Option<i32>,
 }
 
 /// The file tab data for a single file.
