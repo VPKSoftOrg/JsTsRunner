@@ -92,11 +92,11 @@ impl TauriCommands {
         let path = Path::new(path);
         match Path::try_exists(path) {
             Ok(exists) => {
-                if (!exists) {
+                if !exists {
                     return Ok(false);
                 }
             }
-            Err(e) => {
+            Err(_) => {
                 return Ok(false);
             }
         };
