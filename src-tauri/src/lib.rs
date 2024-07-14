@@ -71,7 +71,7 @@ pub async fn run() {
             is_existing_file_missing_in_fs,
             reload_file_contents,
             set_current_file_keep_in_editor,
-            save_file_contents
+            save_file_contents,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -86,7 +86,7 @@ async fn load_settings() -> Result<AppConfig, String> {
 /// See [TauriCommands::load_file_state]
 #[tauri::command]
 async fn load_file_state(app_state: State<'_, AppState>) -> Result<bool, String> {
-    TauriCommands::load_file_state(app_state).await
+    TauriCommands::load_file_state(&app_state).await
 }
 
 /// See [TauriCommands::save_settings]
@@ -98,7 +98,7 @@ async fn save_settings(config: AppConfig) -> bool {
 /// See [TauriCommands::run_script]
 #[tauri::command]
 async fn run_script(code: String, app_state: State<'_, AppState>) -> Result<String, String> {
-    TauriCommands::run_script(code, app_state).await
+    TauriCommands::run_script(code, &app_state).await
 }
 
 /// See [TauriCommands::run_script_line_by_line]
@@ -107,13 +107,13 @@ async fn run_script_line_by_line(
     code: Vec<String>,
     app_state: State<'_, AppState>,
 ) -> Result<Vec<String>, String> {
-    TauriCommands::run_script_line_by_line(code, app_state).await
+    TauriCommands::run_script_line_by_line(code, &app_state).await
 }
 
 /// See [TauriCommands::save_open_tabs]
 #[tauri::command]
 async fn save_open_tabs(app_state: State<'_, AppState>) -> Result<bool, String> {
-    TauriCommands::save_open_tabs(app_state).await
+    TauriCommands::save_open_tabs(&app_state).await
 }
 
 /// See [TauriCommands::update_open_tabs]
@@ -122,13 +122,13 @@ async fn update_open_tabs(
     tab_data: Vec<FileTabData>,
     app_state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    TauriCommands::update_open_tabs(tab_data, app_state).await
+    TauriCommands::update_open_tabs(tab_data, &app_state).await
 }
 
 /// See [TauriCommands::get_new_tab_id]
 #[tauri::command]
 async fn get_new_tab_id(app_state: State<'_, AppState>) -> Result<i32, String> {
-    TauriCommands::get_new_tab_id(app_state).await
+    TauriCommands::get_new_tab_id(&app_state).await
 }
 
 /// See [TauriCommands::add_new_tab]
@@ -137,13 +137,13 @@ async fn add_new_tab(
     tab_data: FileTabData,
     app_state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    TauriCommands::add_new_tab(tab_data, app_state).await
+    TauriCommands::add_new_tab(tab_data, &app_state).await
 }
 
 /// See [TauriCommands::get_app_state]
 #[tauri::command]
 async fn get_app_state(app_state: State<'_, AppState>) -> Result<AppStateResult, String> {
-    TauriCommands::get_app_state(app_state).await
+    TauriCommands::get_app_state(&app_state).await
 }
 
 /// See [TauriCommands::open_existing_file]
@@ -152,7 +152,7 @@ async fn open_existing_file(
     file_name: String,
     app_state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    TauriCommands::open_existing_file(file_name, app_state).await
+    TauriCommands::open_existing_file(file_name, &app_state).await
 }
 
 /// See [TauriCommands::is_file_changed_in_fs]
@@ -161,7 +161,7 @@ async fn is_file_changed_in_fs(
     data: FileTabData,
     app_state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    TauriCommands::is_file_changed_in_fs(data, app_state).await
+    TauriCommands::is_file_changed_in_fs(data, &app_state).await
 }
 
 /// See [TauriCommands::is_existing_file_missing_in_fs]
@@ -170,7 +170,7 @@ async fn is_existing_file_missing_in_fs(
     data: FileTabData,
     app_state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    TauriCommands::is_existing_file_missing_in_fs(data, app_state).await
+    TauriCommands::is_existing_file_missing_in_fs(data, &app_state).await
 }
 
 /// See [TauriCommands::reload_file_contents]
@@ -179,7 +179,7 @@ async fn reload_file_contents(
     data: FileTabData,
     app_state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    TauriCommands::reload_file_contents(data, app_state).await
+    TauriCommands::reload_file_contents(data, &app_state).await
 }
 
 /// See [TauriCommands::set_current_file_keep_in_editor]
@@ -188,7 +188,7 @@ async fn set_current_file_keep_in_editor(
     data: FileTabData,
     app_state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    TauriCommands::set_current_file_keep_in_editor(data, app_state).await
+    TauriCommands::set_current_file_keep_in_editor(data, &app_state).await
 }
 
 /// See [TauriCommands::save_file_contents]
@@ -198,5 +198,5 @@ async fn save_file_contents(
     file_name_path: Option<String>,
     app_state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    TauriCommands::save_file_contents(data, file_name_path, app_state).await
+    TauriCommands::save_file_contents(data, file_name_path, &app_state).await
 }

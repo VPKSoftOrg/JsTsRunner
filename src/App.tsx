@@ -5,7 +5,6 @@ import "./App.css";
 import classNames from "classnames";
 import { getCurrent } from "@tauri-apps/api/window";
 import { open, save, SaveDialogOptions } from "@tauri-apps/plugin-dialog";
-import { UnlistenFn } from "@tauri-apps/api/event";
 import { StyledTitle } from "./components/app/WindowTitle";
 import { LocalizeFunction, useTranslate } from "./localization/Localization";
 import { MenuKeys } from "./menu/MenuItems";
@@ -63,6 +62,7 @@ const App = ({ className }: AppProps) => {
     const [aboutPopupVisible, setAboutPopupVisible] = React.useState(false);
     const [preferencesVisible, setPreferencesVisible] = React.useState(false);
     const [settings, settingsLoaded, updateSettings, reloadSettings] = useSettings(settingsErrorCallback);
+    const [appStateLoaded, setAppStateLoaded] = React.useState<boolean>(false);
     const [previewDarkMode, setPreviewDarkMode] = React.useState<boolean | null>(null);
     const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: unknown }>({ language: "javascript", oneLineEvaluation: false });
     const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
@@ -98,7 +98,6 @@ const App = ({ className }: AppProps) => {
 
     // Store the application's current window into a memoized variable.
     const appWindow = React.useMemo(() => getCurrent(), []);
-    const appStateLoaded = React.useRef<boolean>(false);
 
     // Evaluate the active tab's code.
     const evaluateActiveCode = React.useCallback(() => {
@@ -122,9 +121,16 @@ const App = ({ className }: AppProps) => {
         }
     }, [activeTabKey, fileTabs, notification, settings, translate]);
 
+    const setAppStateToState = React.useCallback((state: AppStateResult) => {
+        setFileTabs(state.file_tabs);
+        if (state.active_tab_id !== null && state.active_tab_id > 0) {
+            setActiveTabKey(state.active_tab_id);
+        }
+    }, []);
+
     // Load the initial application state consisting of the file tabs and related data.
     React.useEffect(() => {
-        if (appStateLoaded.current && settingsLoaded) {
+        if (appStateLoaded && settingsLoaded) {
             return;
         }
 
@@ -132,14 +138,14 @@ const App = ({ className }: AppProps) => {
             .then(() => {
                 getAppState()
                     .then((result: AppStateResult) => {
-                        setFileTabs(result.file_tabs);
-                        appStateLoaded.current = true;
+                        setAppStateToState(result);
+                        setAppStateLoaded(true);
                         evaluateActiveCode();
                     })
                     .catch(error => notification("error", error));
             })
             .catch(error => notification("error", error));
-    }, [evaluateActiveCode, notification, settingsLoaded]);
+    }, [appStateLoaded, evaluateActiveCode, notification, setAppStateToState, settingsLoaded]);
 
     // Check if the active tab's file has been changed in the filesystem.
     const checkTabFileChanged = React.useCallback(() => {
@@ -156,6 +162,7 @@ const App = ({ className }: AppProps) => {
         }
     }, [fileTabs, activeTabKey, notification]);
 
+    // Check if the active tab's file has disappeared from the filesystem.
     const checkFileLostFs = React.useCallback(() => {
         const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
         if (tabScript) {
@@ -216,15 +223,24 @@ const App = ({ className }: AppProps) => {
 
     // A debounced callback to save the current file tabs.
     const saveFileTabs = React.useCallback(() => {
-        if (!appStateLoaded.current || !settingsLoaded) {
+        if (!appStateLoaded || !settingsLoaded) {
             return Promise.resolve();
         }
+
         return updateOpenTabs(fileTabs)
             .then(() => {
-                void saveOpenTabs().catch(error => notification("error", error));
+                void saveOpenTabs()
+                    .then(() => {
+                        getAppState()
+                            .then((result: AppStateResult) => {
+                                setAppStateToState(result);
+                            })
+                            .catch(error => notification("error", error));
+                    })
+                    .catch(error => notification("error", error));
             })
             .catch(error => notification("error", error));
-    }, [fileTabs, notification, settingsLoaded]);
+    }, [appStateLoaded, fileTabs, notification, setAppStateToState, settingsLoaded]);
 
     // A debounced callback to save the current file tabs if nothing has changed in 5 seconds.
     useDebounce(saveFileTabs, 5_000); // TODO::Make this configurable
@@ -258,10 +274,10 @@ const App = ({ className }: AppProps) => {
     const reloadAppState = React.useCallback(() => {
         getAppState()
             .then((result: AppStateResult) => {
-                setFileTabs(result.file_tabs);
+                setAppStateToState(result);
             })
             .catch(error => notification("error", error));
-    }, [notification]);
+    }, [notification, setAppStateToState]);
 
     // A callback to reload the current file contents.
     const reloadCurrentFileContents = React.useCallback(() => {
@@ -285,7 +301,7 @@ const App = ({ className }: AppProps) => {
                         .then(() => {
                             getAppState()
                                 .then((result: AppStateResult) => {
-                                    setFileTabs(result.file_tabs);
+                                    setAppStateToState(result);
                                 })
                                 .catch(error => notification("error", error));
                         })
@@ -293,7 +309,7 @@ const App = ({ className }: AppProps) => {
                 })
                 .catch(error => notification("error", error));
         },
-        [notification]
+        [notification, setAppStateToState]
     );
 
     // A callback to save the application state and reload it afterwards.
@@ -302,12 +318,12 @@ const App = ({ className }: AppProps) => {
             .then(() => {
                 getAppState()
                     .then((result: AppStateResult) => {
-                        setFileTabs(result.file_tabs);
+                        setAppStateToState(result);
                     })
                     .catch(error => notification("error", error));
             })
             .catch(error => notification("error", error));
-    }, [notification]);
+    }, [notification, setAppStateToState]);
 
     // Enable or disable the "Save", "Save As" and "Evaluate Code" menu and toolbar items
     // based on the currently selected tab.
@@ -459,24 +475,31 @@ const App = ({ className }: AppProps) => {
         ]
     );
 
-    // An effect to check if the current tab file contents has been changed after the window has been focused.
-    React.useEffect(() => {
-        let unlisten: UnlistenFn = () => {};
-        appWindow
-            .onFocusChanged(({ payload: focused }) => {
-                if (focused) {
-                    checkTabFileChanged();
-                    checkFileLostFs();
-                }
-            })
-            .then(fn => {
-                unlisten = fn;
-            })
-            .catch(error => notification("error", error));
+    // A callback to do checks when the focus changes.
+    const focusChangedCallback = React.useCallback(() => {
+        checkTabFileChanged();
+        checkFileLostFs();
+    }, [checkFileLostFs, checkTabFileChanged]);
 
-        // you need to call unlisten if your handler goes out of scope e.g. the component is unmounted
-        return () => unlisten();
-    }, [appWindow, checkFileLostFs, checkTabFileChanged, notification]);
+    // Tauri v2 uses async unlisten functions, so handle the effect a bit differently.
+    React.useEffect(() => {
+        const unlistenPromise = getCurrent().onFocusChanged(({ payload: focused }) => {
+            if (focused) {
+                focusChangedCallback();
+            }
+        });
+
+        // Return a cleanup function as a promise resove chain.
+        return () => {
+            unlistenPromise
+                .then(unlisten => {
+                    unlisten();
+                })
+                .catch(error => {
+                    notification("error", error);
+                });
+        };
+    }, [fileTabs, focusChangedCallback, notification]);
 
     // A callback to close the preferences popup.
     const onPreferencesClose = React.useCallback(() => {
@@ -585,7 +608,7 @@ const App = ({ className }: AppProps) => {
     }, [evaluationResult]);
 
     // Render loading indicator if the settings and app state are not loaded yet.
-    if (!settingsLoaded || settings === null || appStateLoaded.current === false) {
+    if (!settingsLoaded || settings === null || appStateLoaded === false) {
         return <div>Loading...</div>;
     }
 

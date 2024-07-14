@@ -50,7 +50,7 @@ impl TauriCommands {
     /// Error if the file was not found in the application state or an internal error occurred.    
     pub async fn is_file_changed_in_fs(
         data: FileTabData,
-        app_state: State<'_, AppState>,
+        app_state: &State<'_, AppState>,
     ) -> Result<bool, String> {
         let tab = match app_state.file_tabs.lock() {
             Ok(tabs) => {
@@ -85,6 +85,21 @@ impl TauriCommands {
         if tab.modified_at.is_none() || tab.file_name_path.is_none() {
             return Ok(false);
         }
+
+        // Skip non-existing file in this function.
+        let path = tab.file_name_path.clone().unwrap();
+        let path = path.as_str();
+        let path = Path::new(path);
+        match Path::try_exists(path) {
+            Ok(exists) => {
+                if (!exists) {
+                    return Ok(false);
+                }
+            }
+            Err(e) => {
+                return Ok(false);
+            }
+        };
 
         let meta_data = match fs::metadata(tab.file_name_path.clone().unwrap()).await {
             Ok(meta_data) => meta_data,
@@ -140,7 +155,7 @@ impl TauriCommands {
     /// Error if the file was not found in the application state or an internal error occurred.
     pub async fn is_existing_file_missing_in_fs(
         data: FileTabData,
-        app_state: State<'_, AppState>,
+        app_state: &State<'_, AppState>,
     ) -> Result<bool, String> {
         let tab = match app_state.file_tabs.lock() {
             Ok(tabs) => {
@@ -196,7 +211,7 @@ impl TauriCommands {
     /// `true` if the file was opened successfully; Error otherwise.
     pub async fn open_existing_file(
         file_name: String,
-        app_state: State<'_, AppState>,
+        app_state: &State<'_, AppState>,
     ) -> Result<bool, String> {
         let meta_data = fs::metadata(file_name.clone()).await;
 
@@ -296,7 +311,7 @@ impl TauriCommands {
     /// `true` if the file was reloaded successfully; Error otherwise.
     pub async fn reload_file_contents(
         data: FileTabData,
-        app_state: State<'_, AppState>,
+        app_state: &State<'_, AppState>,
     ) -> Result<bool, String> {
         let file_name_path = match app_state.file_tabs.lock() {
             Ok(mut tabs) => {
@@ -357,7 +372,7 @@ impl TauriCommands {
 
     pub async fn set_current_file_keep_in_editor(
         data: FileTabData,
-        app_state: State<'_, AppState>,
+        app_state: &State<'_, AppState>,
     ) -> Result<bool, String> {
         match app_state.file_tabs.lock() {
             Ok(mut tabs) => {
@@ -394,7 +409,7 @@ impl TauriCommands {
     pub async fn save_file_contents(
         data: FileTabData,
         file_name_path: Option<String>,
-        app_state: State<'_, AppState>,
+        app_state: &State<'_, AppState>,
     ) -> Result<bool, String> {
         // Get the matching file data from the application state.
         let mut existing_data = match app_state.file_tabs.lock() {

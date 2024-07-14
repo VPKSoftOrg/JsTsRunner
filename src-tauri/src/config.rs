@@ -78,6 +78,8 @@ pub struct FileState {
     pub files: Vec<FileTabData>,
     /// The index for the next opened file.
     pub file_ids: Vec<i32>,
+    /// The identifier of the active tab.
+    pub active_tab_id: Option<i32>,
 }
 
 // The default value for the file state.
@@ -86,6 +88,7 @@ impl ::std::default::Default for FileState {
         Self {
             files: vec![],
             file_ids: vec![],
+            active_tab_id: None,
         }
     }
 }
