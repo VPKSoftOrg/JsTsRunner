@@ -3,7 +3,7 @@ import { styled } from "styled-components";
 import { Editor } from "@monaco-editor/react";
 import "./App.css";
 import classNames from "classnames";
-import { getCurrent } from "@tauri-apps/api/window";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { StyledTitle } from "./components/app/WindowTitle";
 import { useTranslate } from "./localization/Localization";
@@ -101,7 +101,7 @@ const App = ({ className }: AppProps) => {
     const { translate, setLocale } = useTranslate();
 
     // Store the application's current window into a memoized variable.
-    const appWindow = React.useMemo(() => getCurrent(), []);
+    const appWindow = React.useMemo(() => getCurrentWebviewWindow(), []);
 
     // Evaluate the active tab's code.
     const evaluateActiveCode = React.useCallback(() => {
@@ -510,7 +510,7 @@ const App = ({ className }: AppProps) => {
 
     // Tauri v2 uses async unlisten functions, so handle the effect a bit differently.
     React.useEffect(() => {
-        const unlistenPromise = getCurrent().onFocusChanged(({ payload: focused }) => {
+        const unlistenPromise = appWindow.onFocusChanged(({ payload: focused }) => {
             if (focused) {
                 focusChangedCallback();
             }
@@ -526,7 +526,7 @@ const App = ({ className }: AppProps) => {
                     notification("error", error);
                 });
         };
-    }, [fileTabs, focusChangedCallback, notification]);
+    }, [appWindow, fileTabs, focusChangedCallback, notification]);
 
     // A callback to close the preferences popup.
     const onPreferencesClose = React.useCallback(() => {
