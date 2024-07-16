@@ -79,9 +79,9 @@ const getAppState = async (): Promise<AppStateResult> => {
  * @returns {Promise<boolean>} A value indicating whether the tab was added successfully.
  * @throws {Error} If the Tauri API call fails.
  */
-const addNewTab = async (tab_data: FileTabData) => {
+const addNewTab = async (tab_data: FileTabData, tabContent?: string | null) => {
     try {
-        return await invoke("add_new_tab", { tabData: tab_data });
+        return await invoke("add_new_tab", { tabData: tab_data, tabContent: tabContent ?? null });
     } catch (error) {
         throw new Error(`${error}`);
     }
@@ -206,6 +206,12 @@ const reloadFileContents = async (data: FileTabData) => {
     }
 };
 
+/**
+ * Sets the current file to kept in the editor using the Tauri API call.
+ * @param {FileTabData} data - The file data to set.
+ * @returns {Promise<boolean>} A value indicating whether the current file was set successfully.
+ * @throws {Error} If the Tauri API call fails.
+ */
 const setKeepCurrentFileInEditor = async (data: FileTabData) => {
     try {
         return await invoke("set_current_file_keep_in_editor", { data });
@@ -229,6 +235,37 @@ const saveFileContents = async (data: FileTabData, fileNamePath: string | null) 
     }
 };
 
+/**
+ * Sets the active tab id using the Tauri API call.
+ * @param {number} tabId - The active tab id.
+ * @returns {Promise<boolean>} A value indicating whether the active tab id was set successfully.
+ * @throws {Error} If the Tauri API call fails.
+ */
+const setActiveTabId = async (tabId: number) => {
+    try {
+        return await invoke("set_active_tab_id", { tabId });
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
+/**
+ * Tests the Tauri API call.
+ * @returns {Promise<string[]>} The test results.
+ * @throws {Error} If the Tauri API call fails.
+ */
+const test_function_call = async (): Promise<string[]> => {
+    if (process.env.NODE_ENV !== "development") {
+        return [];
+    }
+
+    try {
+        return (await invoke("test_function_call")) as string[];
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
 export {
     //
     runScript,
@@ -245,6 +282,8 @@ export {
     reloadFileContents,
     setKeepCurrentFileInEditor,
     saveFileContents,
+    test_function_call,
+    setActiveTabId,
 };
 
 export type { AppStateResult, LineByLineLog };

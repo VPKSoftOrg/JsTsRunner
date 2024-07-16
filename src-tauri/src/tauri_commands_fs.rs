@@ -370,6 +370,14 @@ impl TauriCommands {
         Ok(true)
     }
 
+    /// Sets the file as temporary in the application state.
+    ///
+    /// # Arguments
+    /// `data` - The data of the file to set as temporary.
+    /// `app_state` - The Tauri application state.
+    ///
+    /// # Returns
+    /// `true` if the file was set as temporary successfully; Error otherwise.
     pub async fn set_current_file_keep_in_editor(
         data: FileTabData,
         app_state: &State<'_, AppState>,
