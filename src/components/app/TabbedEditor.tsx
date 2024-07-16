@@ -45,8 +45,10 @@ type TabbedEditorProps = {
     fileTabs: FileTabData[];
     activeTabKey: number;
     settings: Settings | null;
+    fileSaveQueryVisible: boolean;
+    setFileSaveQueryVisible: (value: boolean) => void;
     setActiveTabKey: (value: number) => void;
-    saveFileTabs: () => void;
+    saveFileTabs: (fileTabsOverride?: FileTabData[]) => void;
     setActiveTabScriptType: (scriptType: ScriptType) => void;
     setFileTabs: (fileTabs: FileTabData[]) => void;
     onNewOutput: (output: string | string[]) => void;
@@ -65,6 +67,8 @@ const TabbedEditorComponent = ({
     fileTabs = [],
     activeTabKey,
     settings,
+    fileSaveQueryVisible,
+    setFileSaveQueryVisible,
     setActiveTabKey,
     saveFileTabs,
     setActiveTabScriptType,
@@ -73,7 +77,6 @@ const TabbedEditorComponent = ({
     saveTab,
     notification,
 }: TabbedEditorProps) => {
-    const [fileSaveQueryVisible, setFileSaveQueryVisible] = React.useState(false);
     const [saveQueryResult, setSaveQueryResult] = React.useState<DialogResult | undefined>();
     const fileNameRef = React.useRef<string>("");
     const keyRef = React.useRef<number>(0);
@@ -161,7 +164,7 @@ const TabbedEditorComponent = ({
             const index = newTabs.findIndex(f => f.uid === key);
             newTabs.splice(index, 1);
             setFileTabs(newTabs);
-            saveFileTabs();
+            saveFileTabs(newTabs);
             setSaveQueryResult(undefined);
             keyRef.current = 0;
         },
@@ -194,7 +197,7 @@ const TabbedEditorComponent = ({
                 }
             }
         },
-        [fileTabs, removeTabByKey, saveQueryResult]
+        [fileTabs, removeTabByKey, saveQueryResult, setFileSaveQueryVisible]
     );
 
     React.useEffect(() => {
@@ -207,7 +210,7 @@ const TabbedEditorComponent = ({
                             const index = newTabs.findIndex(f => f.uid === keyRef.current);
                             newTabs.splice(index, 1);
                             setFileTabs(newTabs);
-                            saveFileTabs();
+                            saveFileTabs(newTabs);
                             removeTabByKey(keyRef.current);
                         }
                     })

@@ -73,6 +73,21 @@ impl TauriCommands {
         }
     }
 
+    pub async fn set_active_tab_id(
+        tab_id: i32,
+        app_state: &State<'_, AppState>,
+    ) -> Result<bool, String> {
+        match app_state.active_tab_id.lock() {
+            Ok(mut id) => {
+                *id = Some(tab_id);
+            }
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        }
+        Ok(true)
+    }
+
     /// Updates the open tabs into the application state.
     ///
     /// # Arguments
@@ -123,12 +138,14 @@ impl TauriCommands {
     ///
     /// # Arguments
     /// `tab_data` - The new tab data.
+    /// `tab_content` - An optional content for the new tab.
     /// `app_state` - The Tauri application state.
     ///
     /// # Returns
     /// `true` if the new tab was added successfully; Error otherwise.
     pub async fn add_new_tab(
         tab_data: FileTabData,
+        tab_content: Option<String>,
         app_state: &State<'_, AppState>,
     ) -> Result<bool, String> {
         let mut tab_data = tab_data;
@@ -147,7 +164,11 @@ impl TauriCommands {
             }
         }
 
-        tab_data.content = Some("".to_string());
+        tab_data.content = match tab_content {
+            Some(x) => Some(x),
+            None => Some("".to_string()),
+        };
+
         tab_data.path = None;
         tab_data.is_temporary = true;
 
