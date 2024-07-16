@@ -677,7 +677,8 @@ const App = ({ className }: AppProps) => {
                     <div className="EditorResultContainer">
                         {translate("result", "Result")}
                         <Editor //
-                            theme={previewDarkMode ?? settings.dark_mode ?? false ? "vs-dark" : "light"}
+                            // eslint-disable-next-line prettier/prettier
+                            theme={(previewDarkMode ?? settings.dark_mode ?? false) ? "vs-dark" : "light"}
                             className="EditorResult"
                             value={evaluateEditorValue}
                         />
