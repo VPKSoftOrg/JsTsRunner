@@ -198,7 +198,7 @@ impl TauriCommands {
                 file_tabs
             }
             Err(_) => {
-                return Err("Error: Failed to get application state.".to_string());
+                return Err(t!("messages.failedGetBackendState").into_owned());
             }
         };
 
@@ -208,7 +208,7 @@ impl TauriCommands {
                 file_ids
             }
             Err(_) => {
-                return Err("Error: Failed to get application state.".to_string());
+                return Err(t!("messages.failedGetBackendState").into_owned());
             }
         };
 
@@ -218,7 +218,7 @@ impl TauriCommands {
                 log_stack_lines
             }
             Err(_) => {
-                return Err("Error: Failed to get application state.".to_string());
+                return Err(t!("messages.failedGetBackendState").into_owned());
             }
         };
 
@@ -228,7 +228,7 @@ impl TauriCommands {
                 active_tab_id
             }
             Err(_) => {
-                return Err("Error: Failed to get application state.".to_string());
+                return Err(t!("messages.failedGetBackendState").into_owned());
             }
         };
 
@@ -244,7 +244,7 @@ impl TauriCommands {
                 });
             }
             Err(_) => {
-                return Err("Error: Failed to get application state.".to_string());
+                return Err(t!("messages.failedGetBackendState").into_owned());
             }
         }
     }

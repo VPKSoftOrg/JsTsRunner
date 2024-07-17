@@ -53,4 +53,7 @@ jobs:
         run:  npm run lint
         
       - name: Test deploy
-        run: npm run tauri build
+        run: |
+          npm run rust-localize
+          npm run tauri build
+

@@ -135,18 +135,26 @@ const TabbedEditorComponent = ({
         }
     }, [fileTabs, activeTabKey, setActiveTabKey]);
 
-    const evalueateCallback = React.useCallback(async () => {
+    const [newContent, setNewContent] = React.useState<{ content: string | null; script_language: ScriptType; evalueate_per_line: boolean } | null>(null);
+
+    // Keep the current tab data the same if it has not actually been changed, so the code won't be re-evaluated all the time.
+    React.useEffect(() => {
         const tab = fileTabs.find(f => f.uid === activeTabKey);
-        const editorValue = tab?.content;
-        if (editorValue !== undefined && editorValue !== null && tab !== undefined) {
+        if (tab && (newContent?.content !== tab.content || newContent?.script_language !== tab.script_language || newContent?.evalueate_per_line !== tab.evalueate_per_line)) {
+            setNewContent({ content: tab.content, script_language: tab.script_language, evalueate_per_line: tab.evalueate_per_line });
+        }
+    }, [activeTabKey, fileTabs, newContent?.content, newContent?.evalueate_per_line, newContent?.script_language]);
+
+    const evalueateCallback = React.useCallback(async () => {
+        if (newContent && (newContent.content ?? null) !== null) {
             let value: string | string[] = "";
 
             try {
-                if (tab?.evalueate_per_line && settings) {
-                    value = await evalueateValueByLines(editorValue, settings.skip_undefined_on_js, settings.skip_empty_on_js, tab.script_language);
+                if (newContent.evalueate_per_line && settings) {
+                    value = await evalueateValueByLines(newContent.content, settings.skip_undefined_on_js, settings.skip_empty_on_js, newContent.script_language);
                     value = value.map(f => `${translate("line", "Line")} ${f}`);
                 } else {
-                    value = await evalueateValue(editorValue, true, tab.script_language);
+                    value = await evalueateValue(newContent.content, true, newContent.script_language);
                 }
             } catch (error) {
                 notification("error", error);
@@ -154,7 +162,7 @@ const TabbedEditorComponent = ({
 
             onNewOutput(value);
         }
-    }, [activeTabKey, fileTabs, notification, onNewOutput, settings, translate]);
+    }, [newContent, notification, onNewOutput, settings, translate]);
 
     useDebounce(evalueateCallback, 1_500);
 
