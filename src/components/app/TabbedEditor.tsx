@@ -146,7 +146,7 @@ const TabbedEditorComponent = ({
     }, [activeTabKey, fileTabs, newContent?.content, newContent?.evalueate_per_line, newContent?.script_language]);
 
     const evalueateCallback = React.useCallback(async () => {
-        if (newContent && newContent.content) {
+        if (newContent && (newContent.content ?? null) !== null) {
             let value: string | string[] = "";
 
             try {
