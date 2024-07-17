@@ -249,6 +249,11 @@ const setActiveTabId = async (tabId: number) => {
     }
 };
 
+/**
+ * Sets the i18n locale of the backend using the Tauri API call.
+ * @returns {Promise<boolean>} A value indicating whether the i18n locale was set successfully.
+ * @throws {Error} If the Tauri API call fails.
+ */
 const setI18nLocale = async () => {
     try {
         return await invoke("set_i18n_locale");
