@@ -29,6 +29,10 @@ use tauri_commands::TauriCommands;
 use types::{AppState, AppStateResult, FileTabData};
 use v8;
 
+#[macro_use]
+extern crate rust_i18n;
+i18n!();
+
 mod config;
 mod js_helpers;
 mod tauri_commands;
@@ -57,6 +61,7 @@ pub async fn run() {
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             load_settings,
+            set_i18n_locale,
             save_settings,
             get_app_state,
             run_script,
@@ -76,13 +81,33 @@ pub async fn run() {
             set_active_tab_id
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect(t!("messages.tauriRunError").into_owned().as_str());
 }
 
 /// See [TauriCommands::load_settings]
 #[tauri::command(async)]
 async fn load_settings() -> Result<AppConfig, String> {
     TauriCommands::load_settings().await
+}
+
+/// Sets the locale from application settings for the i18n.
+///
+/// # Returns
+///
+/// true if the locale was set successfully; Error otherwise.
+#[tauri::command(async)]
+async fn set_i18n_locale() -> Result<bool, String> {
+    let config = TauriCommands::load_settings().await;
+    match config {
+        Ok(settings) => {
+            rust_i18n::set_locale(&settings.locale);
+        }
+        Err(error) => {
+            return Err(error);
+        }
+    }
+
+    Ok(true)
 }
 
 /// See [TauriCommands::load_file_state]

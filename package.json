@@ -10,6 +10,7 @@
         "tauri": "tauri",
         "test-release": "tauri build -b none",
         "release": "tauri build",
+        "rust-localize": "cd ./src/localization/rust_i18n_transform/ && npm install && tsc && node ./dist/index.js",
         "lint": "eslint --max-warnings=0 --config ./.eslintrc.cjs --ext .tsx,.ts ./src/"
     },
     "dependencies": {

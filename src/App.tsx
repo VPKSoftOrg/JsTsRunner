@@ -29,6 +29,7 @@ import {
     saveFileContents,
     saveOpenTabs,
     setActiveTabId,
+    setI18nLocale,
     setKeepCurrentFileInEditor,
     test_function_call,
     updateOpenTabs,
@@ -150,6 +151,8 @@ const App = ({ className }: AppProps) => {
                     .catch(error => notification("error", error));
             })
             .catch(error => notification("error", error));
+
+        void setI18nLocale().catch(error => notification("error", error));
     }, [appStateLoaded, evaluateActiveCode, notification, setAppStateToState, settingsLoaded]);
 
     // Check if the active tab's file has been changed in the filesystem.
@@ -537,8 +540,9 @@ const App = ({ className }: AppProps) => {
             // Reset the theme based on the application settings.
             setPreviewDarkMode(null);
             setTheme && setTheme(settings?.dark_mode ? "dark" : "light");
+            void setI18nLocale().catch(error => notification("error", error));
         });
-    }, [reloadSettings, setTheme, settings?.dark_mode]);
+    }, [notification, reloadSettings, setTheme, settings?.dark_mode]);
 
     // This effect occurs when the theme token has been changed and updates the
     // root and body element colors to match to the new theme.

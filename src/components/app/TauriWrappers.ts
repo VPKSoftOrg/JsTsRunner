@@ -249,6 +249,14 @@ const setActiveTabId = async (tabId: number) => {
     }
 };
 
+const setI18nLocale = async () => {
+    try {
+        return await invoke("set_i18n_locale");
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
 /**
  * Tests the Tauri API call.
  * @returns {Promise<string[]>} The test results.
@@ -283,6 +291,7 @@ export {
     setKeepCurrentFileInEditor,
     saveFileContents,
     test_function_call,
+    setI18nLocale,
     setActiveTabId,
 };
 

@@ -30,7 +30,7 @@ use crate::types::FileTabData;
 #[derive(Serialize, Deserialize)]
 pub struct AppConfig {
     /// The current application locale used by the i18next library
-    locale: String,
+    pub locale: String,
     /// A value indicating whether the plugin-window-state should be used to remember the previous window state.
     save_window_state: bool,
     /// A value indicating whether to use dark mode with the application.
