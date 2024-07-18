@@ -132,6 +132,7 @@ const DraggableTabsComponent = (props: DraggableTabsProps) => {
 
     // Discard props not intented directly for the compoent.
     const newProps = React.useMemo(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { setItems: _1, onItemsReordered: _2, onDraggingChanged: _3, ...newProps } = props;
         return newProps;
     }, [props]);
