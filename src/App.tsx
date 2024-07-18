@@ -23,6 +23,7 @@ import {
     getNewTabId,
     isExistingFileMissingInFs,
     isFileChangedInFs,
+    isFileOpened,
     loadFileState,
     openExistingFile,
     reloadFileContents,
@@ -38,10 +39,11 @@ import { useNotify } from "./utilities/app/Notify";
 import { useDebounce } from "./hooks/useDebounce";
 import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
 import { ToolBarItems } from "./menu/ToolbarItems";
-import { DialogButtons, DialogResult, PopupType } from "./components/Enums";
+import { DialogButtons, DialogResult, PopupType, PopupTypeOk } from "./components/Enums";
 import { ConfirmPopup } from "./components/popups/ConfirmPopup";
 import { evalueateValue, evalueateValueByLines } from "./utilities/app/Code";
 import { genNewTab, getDialogFilter, getOpenDialogFilter, saveTab } from "./utilities/app/FileTabs";
+import { MessagePopup } from "./components/popups/MessagePopup";
 
 type AppProps = CommonProps;
 
@@ -75,6 +77,8 @@ const App = ({ className }: AppProps) => {
     const [reloadConfirmVisible, setReloadConfirmVisible] = React.useState(false);
     const [keepFileInEditorVisible, setKeepFileInEditorVisible] = React.useState(false);
     const [fileSaveQueryVisible, setFileSaveQueryVisible] = React.useState(false);
+    const [messagePopupVisible, setMessagePopupVisible] = React.useState(false);
+    const [messagePopupMessage, setMessagePopupMessage] = React.useState("");
 
     const fileNameRef = React.useRef<string>("");
     const lostFileNameRef = React.useRef<string>("");
@@ -385,7 +389,16 @@ const App = ({ className }: AppProps) => {
                     void open(getOpenDialogFilter(translate))
                         .then(files => {
                             if (files) {
-                                void openExistingFileWrapped(files.path).catch(error => notification("error", error));
+                                isFileOpened(files.path)
+                                    .then(opened => {
+                                        if (opened) {
+                                            setMessagePopupMessage(translate("fileAlreadyOpened", "The file '{{file}}' is already opened in the editor.", { file: files.path }));
+                                            setMessagePopupVisible(true);
+                                        } else {
+                                            void openExistingFileWrapped(files.path).catch(error => notification("error", error));
+                                        }
+                                    })
+                                    .catch(error => notification("error", error));
                             }
                         })
                         .catch(error => notification("error", error));
@@ -611,6 +624,7 @@ const App = ({ className }: AppProps) => {
         [reloadAppState, reloadCurrentFileContents]
     );
 
+    // A callback after the keep file in editor confirm popup is closed and a result from the popup is received.
     const keepFileInEditorConfirmClose = React.useCallback(
         (result: DialogResult) => {
             setKeepFileInEditorVisible(false);
@@ -634,9 +648,15 @@ const App = ({ className }: AppProps) => {
         [activeTabKey, fileTabs, notification, reloadCurrentFileContents, saveFileTabs]
     );
 
+    // A callback to set the script evaluation result in the state.
     const evaluateEditorValue = React.useMemo(() => {
         return Array.isArray(evaluationResult) ? evaluationResult.join("\n") : evaluationResult;
     }, [evaluationResult]);
+
+    // A callback to close the message popup.
+    const onMessagePopupClose = React.useCallback(() => {
+        setMessagePopupVisible(false);
+    }, []);
 
     // Render loading indicator if the settings and app state are not loaded yet.
     if (!settingsLoaded || settings === null || appStateLoaded === false) {
@@ -685,6 +705,7 @@ const App = ({ className }: AppProps) => {
                             theme={(previewDarkMode ?? settings.dark_mode ?? false) ? "vs-dark" : "light"}
                             className="EditorResult"
                             value={evaluateEditorValue}
+                            options={{ readOnly: true }}
                         />
                     </div>
                 </div>
@@ -719,6 +740,12 @@ const App = ({ className }: AppProps) => {
                 message={translate("fileNoLongerExistsKeepInEditor", "The file '{{file}}' no longer exists. Keep the file in the editor?", { file: lostFileNameRef.current })}
                 buttons={DialogButtons.Yes | DialogButtons.No}
                 onClose={keepFileInEditorConfirmClose}
+            />
+            <MessagePopup //
+                visible={messagePopupVisible}
+                onClose={onMessagePopupClose}
+                message={messagePopupMessage}
+                mode={PopupTypeOk.Warning}
             />
         </>
     );

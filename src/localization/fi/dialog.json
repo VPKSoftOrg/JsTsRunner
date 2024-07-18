@@ -4,5 +4,6 @@
     "warning": "Varoitus",
     "yes": "Kyllä",
     "no": "Ei",
-    "cancel": "Peruuta"
+    "cancel": "Peruuta",
+    "error": "Virhe"
 }

@@ -29,6 +29,9 @@ import { styled } from "styled-components";
 import { CommonProps } from "../components/Types";
 import saveAsIcon from "./floppy-diskette-with-pen-svgrepo-com.svg";
 import saveIcon from "./floppy-disk-digital-data-storage-or-save-interface-symbol-svgrepo-com.svg";
+import infoIcon from "./info-signs-svgrepo-com.svg";
+import warningIcon from "./warning-signs-svgrepo-com.svg";
+import errorIcon from "./error-close-svgrepo-com.svg";
 
 type IconProps = CommonProps & {
     darkMode?: boolean;
@@ -62,4 +65,16 @@ const SaveIcon = (props: Omit<IconProps, "icon">) => {
     return <StyledSvgIcon icon={saveIcon} {...props} />;
 };
 
-export { SaveAsIcon, SaveIcon };
+const InformationIcon = (props: Omit<IconProps, "icon">) => {
+    return <SvgIcon icon={infoIcon} {...props} />;
+};
+
+const WarningIcon = (props: Omit<IconProps, "icon">) => {
+    return <SvgIcon icon={warningIcon} {...props} />;
+};
+
+const ErrorIcon = (props: Omit<IconProps, "icon">) => {
+    return <SvgIcon icon={errorIcon} {...props} />;
+};
+
+export { SaveAsIcon, SaveIcon, InformationIcon, WarningIcon, ErrorIcon };

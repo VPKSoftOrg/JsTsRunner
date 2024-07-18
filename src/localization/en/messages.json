@@ -17,5 +17,6 @@
     "tauriRunError": "Error while running tauri application.",
     "failedScriptResultsToString": "Failed to convert compiled script and results to string.",
     "appMainWindowMissing": "The app main window is missing.",
-    "appMainWindowFocusedFailed": "Failed to focus the app main window."
+    "appMainWindowFocusedFailed": "Failed to focus the app main window.",
+    "fileAlreadyOpened": "The file '{{file}}' is already opened in the editor."
 }
