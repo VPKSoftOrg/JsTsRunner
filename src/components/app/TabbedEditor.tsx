@@ -25,8 +25,8 @@ SOFTWARE.
 import * as React from "react";
 import { styled } from "styled-components";
 import classNames from "classnames";
-import { Tabs } from "antd";
 import { Editor } from "@monaco-editor/react";
+import { Tab } from "rc-tabs/lib/interface";
 import { CommonProps, FileTabData, ScriptType } from "../Types";
 import { useDebounce } from "../../hooks/useDebounce";
 import { JavaScriptLogo, TypeScriptLogo } from "../../utilities/app/Images";
@@ -36,6 +36,7 @@ import { useTranslate } from "../../localization/Localization";
 import { NotificationType } from "../../utilities/app/Notify";
 import { evalueateValue, evalueateValueByLines } from "../../utilities/app/Code";
 import { Settings } from "../../utilities/app/Settings";
+import { DraggableTabs } from "../wrappers/DraggableTabs";
 
 /**
  * The props for the {@link TabbedEditor} component.
@@ -78,6 +79,7 @@ const TabbedEditorComponent = ({
     notification,
 }: TabbedEditorProps) => {
     const [saveQueryResult, setSaveQueryResult] = React.useState<DialogResult | undefined>();
+    const [tabItems, setTabItems] = React.useState<Tab[]>([]);
     const fileNameRef = React.useRef<string>("");
     const keyRef = React.useRef<number>(0);
     // The i18n translation hook.
@@ -104,8 +106,9 @@ const TabbedEditorComponent = ({
         [activeTabKey, fileTabs, setFileTabs]
     );
 
-    const tabItems = React.useMemo(() => {
-        const items = [];
+    // Use an effect to update the tab items instead of memoizing them to allow reordering.
+    React.useEffect(() => {
+        const items: Tab[] = [];
 
         for (const tab of fileTabs) {
             items.push({
@@ -126,7 +129,7 @@ const TabbedEditorComponent = ({
             });
         }
 
-        return items;
+        setTabItems(items);
     }, [darkMode, fileTabs, onEditValueChange]);
 
     React.useEffect(() => {
@@ -240,7 +243,7 @@ const TabbedEditorComponent = ({
 
     return (
         <>
-            <Tabs //
+            <DraggableTabs //
                 className={classNames(TabbedEditor.name, className)}
                 items={tabItems}
                 activeKey={activeTabKey.toString()}
@@ -248,6 +251,7 @@ const TabbedEditorComponent = ({
                 hideAdd
                 onChange={onTabChange}
                 onEdit={onTabEdit}
+                setItems={setTabItems}
             />
             <ConfirmPopup //
                 visible={fileSaveQueryVisible}
