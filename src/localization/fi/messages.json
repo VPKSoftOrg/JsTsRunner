@@ -14,5 +14,7 @@
     "failedCompileScript": "Skriptia ei voitu kääntää.",
     "failedRunScript": "Skriptia ei voitu suorittaa.",
     "tauriRunError": "Virhe suoritettaessa Tauri-sovellusta",
-    "failedScriptResultsToString": "Ajetun skriptin tuloksia ei saatu muunnettua merkkijonksi."
+    "failedScriptResultsToString": "Ajetun skriptin tuloksia ei saatu muunnettua merkkijonksi.",
+    "appMainWindowMissing": "Sovelluksen pääikkunaa ei löydy.",
+    "appMainWindowFocusedFailed": "Sovelluksen pääikkunan kohdistus epäonnistui."
 }
