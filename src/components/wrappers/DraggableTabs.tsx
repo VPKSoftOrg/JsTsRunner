@@ -1,3 +1,6 @@
+// This code is based on the And Design Tabs demo: https://ant.design/components/tabs#tabs-demo-custom-tab-bar-node
+// I just refactored it.
+
 import * as React from "react";
 import { styled } from "styled-components";
 import classNames from "classnames";
@@ -14,6 +17,8 @@ import { Cursor } from "../Types";
  */
 type DraggableTabsProps = TabsProps & {
     setItems: (value: Tab[]) => void;
+    onItemsReordered?: (value: Tab[]) => void;
+    onDraggingChanged?: (dragging: boolean) => void;
 };
 
 /**
@@ -58,6 +63,10 @@ const DraggableTabsComponent = (props: DraggableTabsProps) => {
     const sensor = useSensor(PointerSensor, { activationConstraint: { distance: 10 } });
     const [isDragging, setIsDragging] = React.useState(false);
 
+    React.useEffect(() => {
+        props.onDraggingChanged?.(isDragging);
+    }, [isDragging, props]);
+
     const onDragStart = React.useCallback(() => {
         setIsDragging(true);
     }, []);
@@ -74,6 +83,7 @@ const DraggableTabsComponent = (props: DraggableTabsProps) => {
                 const newItems = arrayMove(props.items, activeIndex, overIndex);
 
                 props.setItems(newItems);
+                props.onItemsReordered?.(newItems);
             }
         },
         [props]
@@ -120,8 +130,9 @@ const DraggableTabsComponent = (props: DraggableTabsProps) => {
         [onDragEnd, onDragStart, props.items, renderChildren, sensor]
     );
 
+    // Discard props not intented directly for the compoent.
     const newProps = React.useMemo(() => {
-        const { ["setItems"]: _, ...newProps } = props;
+        const { setItems: _1, onItemsReordered: _2, onDraggingChanged: _3, ...newProps } = props;
         return newProps;
     }, [props]);
 
