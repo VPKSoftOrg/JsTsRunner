@@ -263,6 +263,20 @@ const setI18nLocale = async () => {
 };
 
 /**
+ * Checks if a file is opened using the Tauri API call.
+ * @param {string} fileName - The name of the file to check.
+ * @returns {Promise<boolean>} A value indicating whether the file is opened.
+ * @throws {Error} If the Tauri API call fails.
+ */
+const isFileOpened = async (fileName: string): Promise<boolean> => {
+    try {
+        return invoke("is_file_opened", { fileName });
+    } catch (error) {
+        throw new Error(`${error}`);
+    }
+};
+
+/**
  * Tests the Tauri API call.
  * @returns {Promise<string[]>} The test results.
  * @throws {Error} If the Tauri API call fails.
@@ -297,6 +311,7 @@ export {
     saveFileContents,
     test_function_call,
     setI18nLocale,
+    isFileOpened,
     setActiveTabId,
 };
 

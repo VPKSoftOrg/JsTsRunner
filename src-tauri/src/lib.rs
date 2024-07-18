@@ -81,6 +81,7 @@ pub async fn run() {
             reload_file_contents,
             set_current_file_keep_in_editor,
             save_file_contents,
+            is_file_opened,
             test_function_call,
             set_active_tab_id
         ])
@@ -237,6 +238,12 @@ async fn save_file_contents(
 #[tauri::command(async)]
 async fn set_active_tab_id(tab_id: i32, app_state: State<'_, AppState>) -> Result<bool, String> {
     TauriCommands::set_active_tab_id(tab_id, &app_state).await
+}
+
+/// See [TauriCommands::is_file_opened]
+#[tauri::command(async)]
+async fn is_file_opened(file_name: String, app_state: State<'_, AppState>) -> Result<bool, String> {
+    TauriCommands::is_file_opened(file_name, &app_state).await
 }
 
 /// A test function call for debugging and testing purposes.

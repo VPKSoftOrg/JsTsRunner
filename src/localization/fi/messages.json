@@ -16,5 +16,6 @@
     "tauriRunError": "Virhe suoritettaessa Tauri-sovellusta",
     "failedScriptResultsToString": "Ajetun skriptin tuloksia ei saatu muunnettua merkkijonksi.",
     "appMainWindowMissing": "Sovelluksen pääikkunaa ei löydy.",
-    "appMainWindowFocusedFailed": "Sovelluksen pääikkunan kohdistus epäonnistui."
+    "appMainWindowFocusedFailed": "Sovelluksen pääikkunan kohdistus epäonnistui.",
+    "fileAlreadyOpened": "Tiedosto '{{file}}' on jo avattuna editorissa."
 }
