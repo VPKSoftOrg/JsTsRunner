@@ -15,5 +15,7 @@
     "failedCompileScript": "Failed to compile script.",
     "failedRunScript": "Failed to run script.",
     "tauriRunError": "Error while running tauri application.",
-    "failedScriptResultsToString": "Failed to convert compiled script and results to string."
+    "failedScriptResultsToString": "Failed to convert compiled script and results to string.",
+    "appMainWindowMissing": "The app main window is missing.",
+    "appMainWindowFocusedFailed": "Failed to focus the app main window."
 }

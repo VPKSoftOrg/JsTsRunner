@@ -27,6 +27,7 @@ use config::AppConfig;
 use tauri::State;
 use tauri_commands::TauriCommands;
 use types::{AppState, AppStateResult, FileTabData};
+use utils::show_window;
 use v8;
 
 #[macro_use]
@@ -52,6 +53,9 @@ pub async fn run() {
     v8::V8::initialize();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            let _ = show_window(app);
+        }))
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
