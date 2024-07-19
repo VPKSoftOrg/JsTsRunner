@@ -19,5 +19,9 @@ A software to evaluate JavaScript / TypeScript code.
 *The Light mode*
 ![image](https://github.com/user-attachments/assets/037511aa-4346-4e4e-82b8-654d042f0086)
 
+*A run-time demo video*
+https://github.com/user-attachments/assets/4ee8a2d1-8c7c-4114-b076-17bc02606509
+
+
 **TODO**
 Write the rest...
