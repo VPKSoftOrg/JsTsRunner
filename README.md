@@ -7,7 +7,6 @@ A software to evaluate JavaScript / TypeScript code.
 * Has an internal memory so the files / tab contents doesn't need to be saved on close
 * Can transpile TypeScript to JavaScript
 * Can evaluate the code either line by line or the entire file at once
-* Dark / Light mode
 
 ## Screenshots
 *A TypeScript file in an entire file evaluation mode*
@@ -20,8 +19,7 @@ A software to evaluate JavaScript / TypeScript code.
 ![image](https://github.com/user-attachments/assets/037511aa-4346-4e4e-82b8-654d042f0086)
 
 *A run-time demo video*
-https://github.com/user-attachments/assets/4ee8a2d1-8c7c-4114-b076-17bc02606509
-
+![js_ts_demo](https://github.com/user-attachments/assets/30a21f61-5600-4d55-9c67-d12895d40c25)
 
 **TODO**
 Write the rest...
