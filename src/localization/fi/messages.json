@@ -4,5 +4,18 @@
     "currentMustBeTsFile": "Tiedostosi tyyppi on oltava TypeScript-tiedosto, jotta se voidaan muuntaa JavaScriptiin.",
     "fileHasBeenChangedReload": "Tiedosto '{{file}}' on muuttunut. Ladataanko tiedosto uudelleen, jotta muutokset näytetään.",
     "saveFileBeforeClose": "Tallennetaanko tiedosto '{{file}}' ennen sulkemista?",
-    "fileNoLongerExistsKeepInEditor": "Tiedostoa '{{file}}' ei ole enää olemassa. Pidetäänkö tiedosto editorissa?"
+    "fileNoLongerExistsKeepInEditor": "Tiedostoa '{{file}}' ei ole enää olemassa. Pidetäänkö tiedosto editorissa?",
+    "failedFindFileBackendState": "Tiedostoa ei löytynyt taustasovelluksen tilasta.",
+    "fileTooLargeHardCoded": "Tiedosto '{{file}}' on liian suuri. [Kovakoodattu] raja on 10 MB.",
+    "filePathNotSpecified": "Tiedoston nimeä ja polkua ei ole määritetty.",
+    "theFileDoesNotExist": "Tiedostoa ei ole olemassa.",
+    "fileContentNotSpecified": "Tiedoston sisältöä ei ole määritetty.",
+    "failedCreateScript": "Skriptia ei voitu luoda.",
+    "failedCompileScript": "Skriptia ei voitu kääntää.",
+    "failedRunScript": "Skriptia ei voitu suorittaa.",
+    "tauriRunError": "Virhe suoritettaessa Tauri-sovellusta",
+    "failedScriptResultsToString": "Ajetun skriptin tuloksia ei saatu muunnettua merkkijonksi.",
+    "appMainWindowMissing": "Sovelluksen pääikkunaa ei löydy.",
+    "appMainWindowFocusedFailed": "Sovelluksen pääikkunan kohdistus epäonnistui.",
+    "fileAlreadyOpened": "Tiedosto '{{file}}' on jo avattuna editorissa."
 }

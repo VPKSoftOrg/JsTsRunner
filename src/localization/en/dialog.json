@@ -4,5 +4,6 @@
     "warning": "Warning",
     "yes": "Yes",
     "no": "No",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "error": "Error"
 }

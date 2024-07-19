@@ -4,5 +4,19 @@
     "currentMustBeTsFile": "The current file type must be a TypeScript file in order to convert it to JavaScript.",
     "fileHasBeenChangedReload": "The file '{{file}}' has been changed. Reload the file to see the changed contents.",
     "saveFileBeforeClose": "Save the file '{{file}}' before closing it?",
-    "fileNoLongerExistsKeepInEditor": "The file '{{file}}' no longer exists. Keep the file in the editor?"
+    "fileNoLongerExistsKeepInEditor": "The file '{{file}}' no longer exists. Keep the file in the editor?",
+    "failedFindFileBackendState": "Failed to find the file in the backend application state.",
+    "fileTooLargeHardCoded": "The file '{{file}}' is too large. The [hard-coded] limit is 10 MB.",
+    "filePathNotSpecified": "The file name and path is not specified.",
+    "theFileDoesNotExist": "The file does not exist.",
+    "fileContentNotSpecified": "The file content is not specified.",
+    "failedGetBackendState": "Failed to get the backend application state.",
+    "failedCreateScript": "Failed to create script.",
+    "failedCompileScript": "Failed to compile script.",
+    "failedRunScript": "Failed to run script.",
+    "tauriRunError": "Error while running tauri application.",
+    "failedScriptResultsToString": "Failed to convert compiled script and results to string.",
+    "appMainWindowMissing": "The app main window is missing.",
+    "appMainWindowFocusedFailed": "Failed to focus the app main window.",
+    "fileAlreadyOpened": "The file '{{file}}' is already opened in the editor."
 }

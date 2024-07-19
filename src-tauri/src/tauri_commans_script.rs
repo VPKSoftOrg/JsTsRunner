@@ -93,27 +93,27 @@ impl TauriCommands {
         let source = match v8::String::new(scope, code) {
             Some(source) => source,
             None => {
-                return Err("Failed to create script.".to_string());
+                return Err(t!("messages.failedCreateScript").into_owned());
             }
         };
 
         let script = match v8::Script::compile(scope, source, None) {
             Some(script) => script,
             None => {
-                return Err("Failed to compile script.".to_string());
+                return Err(t!("messages.failedCompileScript").into_owned());
             }
         };
 
         let result = match script.run(scope) {
             Some(result) => result,
             None => {
-                return Err("Failed to run script.".to_string());
+                return Err(t!("messages.failedRunScript").into_owned());
             }
         };
 
         let result = match result.to_string(scope) {
             Some(result) => result.to_rust_string_lossy(scope),
-            None => "Failed to convert compiled script and results to string.".to_string(),
+            None => t!("messages.failedScriptResultsToString").into_owned(),
         };
 
         match app_state.log_stack.lock() {
@@ -180,12 +180,14 @@ impl TauriCommands {
         let mut result_all: Vec<String> = Vec::new();
 
         for i in 0..code.len() {
+            set_file_line(Some(i as i32));
+
             // Skip empty lines
             if code[i].trim() == "" {
+                result_all.push("".into());
                 continue;
             }
 
-            set_file_line(Some(i as i32));
             let code = code[i].as_str();
 
             let scope = &mut v8::ContextScope::new(scope, context);
@@ -193,7 +195,7 @@ impl TauriCommands {
             let source = match v8::String::new(scope, code) {
                 Some(source) => source,
                 None => {
-                    result_all.push("Failed to create script.".to_string());
+                    result_all.push(t!("messages.failedCreateScript").into_owned());
                     continue;
                 }
             };
@@ -201,7 +203,7 @@ impl TauriCommands {
             let script = match v8::Script::compile(scope, source, None) {
                 Some(script) => script,
                 None => {
-                    result_all.push("Failed to compile script.".to_string());
+                    result_all.push(t!("messages.failedCompileScript").into_owned());
                     continue;
                 }
             };
@@ -209,7 +211,7 @@ impl TauriCommands {
             let result = match script.run(scope) {
                 Some(result) => result,
                 None => {
-                    result_all.push("Failed to run script.".to_string());
+                    result_all.push(t!("messages.failedCompileScript").into_owned());
                     continue;
                 }
             };
@@ -217,9 +219,7 @@ impl TauriCommands {
             let result = match result.to_string(scope) {
                 Some(result) => result.to_rust_string_lossy(scope),
                 None => {
-                    result_all.push(
-                        "Failed to convert compiled script and results to string.".to_string(),
-                    );
+                    result_all.push(t!("messages.failedScriptResultsToString").into_owned());
                     continue;
                 }
             };

@@ -3,10 +3,10 @@ import { styled } from "styled-components";
 import { Editor } from "@monaco-editor/react";
 import "./App.css";
 import classNames from "classnames";
-import { getCurrent } from "@tauri-apps/api/window";
-import { open, save, SaveDialogOptions } from "@tauri-apps/plugin-dialog";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { open, save } from "@tauri-apps/plugin-dialog";
 import { StyledTitle } from "./components/app/WindowTitle";
-import { LocalizeFunction, useTranslate } from "./localization/Localization";
+import { useTranslate } from "./localization/Localization";
 import { MenuKeys } from "./menu/MenuItems";
 import { AboutPopup } from "./components/popups/AboutPopup";
 import { PreferencesPopup } from "./components/popups/PreferencesPopup";
@@ -23,21 +23,27 @@ import {
     getNewTabId,
     isExistingFileMissingInFs,
     isFileChangedInFs,
+    isFileOpened,
     loadFileState,
     openExistingFile,
     reloadFileContents,
     saveFileContents,
     saveOpenTabs,
+    setActiveTabId,
+    setI18nLocale,
     setKeepCurrentFileInEditor,
+    test_function_call,
     updateOpenTabs,
 } from "./components/app/TauriWrappers";
-import { NotificationType, useNotify } from "./utilities/app/Notify";
+import { useNotify } from "./utilities/app/Notify";
 import { useDebounce } from "./hooks/useDebounce";
 import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
 import { ToolBarItems } from "./menu/ToolbarItems";
-import { DialogButtons, DialogResult, PopupType } from "./components/Enums";
+import { DialogButtons, DialogResult, PopupType, PopupTypeOk } from "./components/Enums";
 import { ConfirmPopup } from "./components/popups/ConfirmPopup";
 import { evalueateValue, evalueateValueByLines } from "./utilities/app/Code";
+import { genNewTab, getDialogFilter, getOpenDialogFilter, saveTab } from "./utilities/app/FileTabs";
+import { MessagePopup } from "./components/popups/MessagePopup";
 
 type AppProps = CommonProps;
 
@@ -70,6 +76,9 @@ const App = ({ className }: AppProps) => {
     const [disabledItems, setDisabledItems] = React.useState<(MenuKeys | ToolBarItems)[]>([]);
     const [reloadConfirmVisible, setReloadConfirmVisible] = React.useState(false);
     const [keepFileInEditorVisible, setKeepFileInEditorVisible] = React.useState(false);
+    const [fileSaveQueryVisible, setFileSaveQueryVisible] = React.useState(false);
+    const [messagePopupVisible, setMessagePopupVisible] = React.useState(false);
+    const [messagePopupMessage, setMessagePopupMessage] = React.useState("");
 
     const fileNameRef = React.useRef<string>("");
     const lostFileNameRef = React.useRef<string>("");
@@ -97,7 +106,7 @@ const App = ({ className }: AppProps) => {
     const { translate, setLocale } = useTranslate();
 
     // Store the application's current window into a memoized variable.
-    const appWindow = React.useMemo(() => getCurrent(), []);
+    const appWindow = React.useMemo(() => getCurrentWebviewWindow(), []);
 
     // Evaluate the active tab's code.
     const evaluateActiveCode = React.useCallback(() => {
@@ -121,6 +130,7 @@ const App = ({ className }: AppProps) => {
         }
     }, [activeTabKey, fileTabs, notification, settings, translate]);
 
+    // Updates the frontend state to the provided value from the [Rust] backend.
     const setAppStateToState = React.useCallback((state: AppStateResult) => {
         setFileTabs(state.file_tabs);
         if (state.active_tab_id !== null && state.active_tab_id > 0) {
@@ -145,6 +155,8 @@ const App = ({ className }: AppProps) => {
                     .catch(error => notification("error", error));
             })
             .catch(error => notification("error", error));
+
+        void setI18nLocale().catch(error => notification("error", error));
     }, [appStateLoaded, evaluateActiveCode, notification, setAppStateToState, settingsLoaded]);
 
     // Check if the active tab's file has been changed in the filesystem.
@@ -221,29 +233,39 @@ const App = ({ className }: AppProps) => {
         }
     }, [setLocale, setTheme, settings]);
 
-    // A debounced callback to save the current file tabs.
-    const saveFileTabs = React.useCallback(() => {
-        if (!appStateLoaded || !settingsLoaded) {
-            return Promise.resolve();
-        }
+    // Check if any popups are visible and return true if so. This will avoid the auto-save debounce to run.
+    const postPoneDebounce = React.useCallback(() => {
+        return reloadConfirmVisible || keepFileInEditorVisible || fileSaveQueryVisible;
+    }, [fileSaveQueryVisible, keepFileInEditorVisible, reloadConfirmVisible]);
 
-        return updateOpenTabs(fileTabs)
-            .then(() => {
-                void saveOpenTabs()
-                    .then(() => {
-                        getAppState()
-                            .then((result: AppStateResult) => {
-                                setAppStateToState(result);
-                            })
-                            .catch(error => notification("error", error));
-                    })
-                    .catch(error => notification("error", error));
-            })
-            .catch(error => notification("error", error));
-    }, [appStateLoaded, fileTabs, notification, setAppStateToState, settingsLoaded]);
+    // A debounced callback to save the current file tabs.
+    const saveFileTabs = React.useCallback(
+        (fileTabsOverride?: FileTabData[]) => {
+            if (!appStateLoaded || !settingsLoaded) {
+                return Promise.resolve();
+            }
+
+            return updateOpenTabs(fileTabsOverride ?? fileTabs)
+                .then(() => {
+                    const saveTabsPromise = saveOpenTabs();
+                    const setActiveTabKeyPromise = setActiveTabId(activeTabKey);
+                    Promise.all([saveTabsPromise, setActiveTabKeyPromise])
+                        .then(() => {
+                            getAppState()
+                                .then((result: AppStateResult) => {
+                                    setAppStateToState(result);
+                                })
+                                .catch(error => notification("error", error));
+                        })
+                        .catch(error => notification("error", error));
+                })
+                .catch(error => notification("error", error));
+        },
+        [activeTabKey, appStateLoaded, fileTabs, notification, setAppStateToState, settingsLoaded]
+    );
 
     // A debounced callback to save the current file tabs if nothing has changed in 5 seconds.
-    useDebounce(saveFileTabs, 5_000); // TODO::Make this configurable
+    useDebounce(saveFileTabs, 5_000, postPoneDebounce); // TODO::Make this configurable
 
     // A callback to close the application returning always false to not to prevent the app from closing.
     const onClose = React.useCallback(async () => {
@@ -367,7 +389,16 @@ const App = ({ className }: AppProps) => {
                     void open(getOpenDialogFilter(translate))
                         .then(files => {
                             if (files) {
-                                void openExistingFileWrapped(files.path).catch(error => notification("error", error));
+                                isFileOpened(files.path)
+                                    .then(opened => {
+                                        if (opened) {
+                                            setMessagePopupMessage(translate("fileAlreadyOpened", "The file '{{file}}' is already opened in the editor.", { file: files.path }));
+                                            setMessagePopupVisible(true);
+                                        } else {
+                                            void openExistingFileWrapped(files.path).catch(error => notification("error", error));
+                                        }
+                                    })
+                                    .catch(error => notification("error", error));
                             }
                         })
                         .catch(error => notification("error", error));
@@ -379,18 +410,7 @@ const App = ({ className }: AppProps) => {
                             let newFileName = translate("newFileWithIndex", "New file {{index}}", { index: uid });
                             newFileName += selectedValues["language"] === "typescript" ? ".ts" : ".js";
 
-                            void addNewTab({
-                                uid: 0,
-                                path: null,
-                                is_temporary: true,
-                                script_language: selectedValues["language"] as ScriptType,
-                                content: null,
-                                file_name: newFileName,
-                                modified_at: null,
-                                file_name_path: null,
-                                modified_at_state: new Date(),
-                                evalueate_per_line: false,
-                            })
+                            void addNewTab(genNewTab(selectedValues["language"] as ScriptType, newFileName))
                                 .then(() => {
                                     saveAppStateReload().catch(error => notification("error", error));
                                 })
@@ -405,15 +425,24 @@ const App = ({ className }: AppProps) => {
                     break;
                 }
                 case "convertToJs": {
-                    const newTabs = [...fileTabs];
-                    const index = newTabs.findIndex(f => f.uid === activeTabKey);
-                    if (index !== -1 && newTabs[index].script_language === "typescript") {
-                        newTabs[index].script_language = "javascript";
-                        newTabs[index].content = transpileTypeSctiptToJs(newTabs[index].content ?? "", true);
-                        setFileTabs(newTabs);
+                    const index = fileTabs.findIndex(f => f.uid === activeTabKey);
+                    if (index !== -1 && fileTabs[index].script_language === "typescript") {
+                        getNewTabId()
+                            .then(uid => {
+                                let newFileName = translate("newFileWithIndex", "New file {{index}}", { index: uid });
+                                newFileName += ".js";
+
+                                void addNewTab(genNewTab("javascript", newFileName), transpileTypeSctiptToJs(fileTabs[index].content ?? "", true))
+                                    .then(() => {
+                                        saveAppStateReload().catch(error => notification("error", error));
+                                    })
+                                    .catch(error => notification("error", error));
+                            })
+                            .catch(error => notification("error", error));
                     } else {
                         notification("info", translate("currentMustBeTsFile", "The current file type must be a TypeScript file in order to convert it to JavaScript."));
                     }
+
                     break;
                 }
                 case "save": {
@@ -453,6 +482,20 @@ const App = ({ className }: AppProps) => {
                     }
                     break;
                 }
+                case "test": {
+                    if (process.env.NODE_ENV !== "development") {
+                        return;
+                    }
+                    test_function_call()
+                        .then(
+                            /*result*/ () => {
+                                // Do something with the result
+                            }
+                        )
+                        .catch(error => notification("error", error));
+
+                    break;
+                }
                 default: {
                     break;
                 }
@@ -483,7 +526,7 @@ const App = ({ className }: AppProps) => {
 
     // Tauri v2 uses async unlisten functions, so handle the effect a bit differently.
     React.useEffect(() => {
-        const unlistenPromise = getCurrent().onFocusChanged(({ payload: focused }) => {
+        const unlistenPromise = appWindow.onFocusChanged(({ payload: focused }) => {
             if (focused) {
                 focusChangedCallback();
             }
@@ -499,7 +542,7 @@ const App = ({ className }: AppProps) => {
                     notification("error", error);
                 });
         };
-    }, [fileTabs, focusChangedCallback, notification]);
+    }, [appWindow, fileTabs, focusChangedCallback, notification]);
 
     // A callback to close the preferences popup.
     const onPreferencesClose = React.useCallback(() => {
@@ -510,8 +553,9 @@ const App = ({ className }: AppProps) => {
             // Reset the theme based on the application settings.
             setPreviewDarkMode(null);
             setTheme && setTheme(settings?.dark_mode ? "dark" : "light");
+            void setI18nLocale().catch(error => notification("error", error));
         });
-    }, [reloadSettings, setTheme, settings?.dark_mode]);
+    }, [notification, reloadSettings, setTheme, settings?.dark_mode]);
 
     // This effect occurs when the theme token has been changed and updates the
     // root and body element colors to match to the new theme.
@@ -566,7 +610,7 @@ const App = ({ className }: AppProps) => {
         return () => {
             void unlisten();
         };
-    }, [appWindow, notification, saveFileTabs, settings, updateSettings]);
+    }, [appWindow]);
 
     // A callback after the reload confirm popup is closed and a result from the popup is received.
     const onReloadConfirmClose = React.useCallback(
@@ -580,6 +624,7 @@ const App = ({ className }: AppProps) => {
         [reloadAppState, reloadCurrentFileContents]
     );
 
+    // A callback after the keep file in editor confirm popup is closed and a result from the popup is received.
     const keepFileInEditorConfirmClose = React.useCallback(
         (result: DialogResult) => {
             setKeepFileInEditorVisible(false);
@@ -597,15 +642,21 @@ const App = ({ className }: AppProps) => {
                 const index = newTabs.findIndex(f => f.uid === activeTabKey);
                 newTabs.splice(index, 1);
                 setFileTabs(newTabs);
-                void saveFileTabs().catch(error => notification("error", error));
+                void saveFileTabs(newTabs).catch(error => notification("error", error));
             }
         },
         [activeTabKey, fileTabs, notification, reloadCurrentFileContents, saveFileTabs]
     );
 
+    // A callback to set the script evaluation result in the state.
     const evaluateEditorValue = React.useMemo(() => {
         return Array.isArray(evaluationResult) ? evaluationResult.join("\n") : evaluationResult;
     }, [evaluationResult]);
+
+    // A callback to close the message popup.
+    const onMessagePopupClose = React.useCallback(() => {
+        setMessagePopupVisible(false);
+    }, []);
 
     // Render loading indicator if the settings and app state are not loaded yet.
     if (!settingsLoaded || settings === null || appStateLoaded === false) {
@@ -634,23 +685,27 @@ const App = ({ className }: AppProps) => {
                 <div id="mainView" className="App-itemsView">
                     <TabbedEditor //
                         darkMode={previewDarkMode ?? settings.dark_mode ?? false}
-                        onNewOutput={onNewOutput}
                         fileTabs={fileTabs}
                         activeTabKey={activeTabKey}
+                        settings={settings}
+                        fileSaveQueryVisible={fileSaveQueryVisible}
                         setActiveTabKey={setActiveTabKey}
+                        onNewOutput={onNewOutput}
                         setFileTabs={setFileTabs}
                         setActiveTabScriptType={setScriptStype}
                         saveFileTabs={saveFileTabs}
                         saveTab={saveFileCallback}
                         notification={notification}
-                        settings={settings}
+                        setFileSaveQueryVisible={setFileSaveQueryVisible}
                     />
                     <div className="EditorResultContainer">
                         {translate("result", "Result")}
                         <Editor //
-                            theme={previewDarkMode ?? settings.dark_mode ?? false ? "vs-dark" : "light"}
+                            // eslint-disable-next-line prettier/prettier
+                            theme={(previewDarkMode ?? settings.dark_mode ?? false) ? "vs-dark" : "light"}
                             className="EditorResult"
                             value={evaluateEditorValue}
+                            options={{ readOnly: true }}
                         />
                     </div>
                 </div>
@@ -686,84 +741,15 @@ const App = ({ className }: AppProps) => {
                 buttons={DialogButtons.Yes | DialogButtons.No}
                 onClose={keepFileInEditorConfirmClose}
             />
+            <MessagePopup //
+                visible={messagePopupVisible}
+                onClose={onMessagePopupClose}
+                message={messagePopupMessage}
+                mode={PopupTypeOk.Warning}
+            />
         </>
     );
 };
-
-/**
- * Saves the contents of the active tab to the file.
- * @param {FileTabData} tab - The tab to save.
- * @param {string | null} fileNamePath - The name and path of the file to save.
- * @returns {Promise<boolean>} A value indicating whether the file contents were saved successfully.
- */
-const saveTab = async (
-    activeTabKey: number,
-    fileTabs: FileTabData[],
-    translate: LocalizeFunction,
-    saveAppStateReload: () => Promise<void>,
-    notification: (type: NotificationType, title: string | null | undefined | Error | unknown, duration?: number) => void
-): Promise<boolean> => {
-    const index = fileTabs.findIndex(f => f.uid === activeTabKey);
-    if (index !== -1) {
-        const tab = fileTabs[index];
-        if (tab.file_name_path === null) {
-            try {
-                const fileName = await save(getDialogFilter(translate, tab));
-                if (fileName) {
-                    try {
-                        try {
-                            await saveFileContents(tab, fileName);
-                            await saveAppStateReload();
-                        } catch (error) {
-                            notification("error", error);
-                            return false;
-                        }
-                    } catch (error) {
-                        notification("error", error);
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-            } catch (error) {
-                notification("error", error);
-                return false;
-            }
-        } else {
-            try {
-                await saveFileContents(tab, tab.file_name_path);
-                await saveAppStateReload();
-            } catch (error) {
-                notification("error", error);
-                return false;
-            }
-        }
-    }
-
-    return true;
-};
-
-/**
- * Returns the save dialog filter.
- * @param {FileTabData} data - The file tab data.
- * @returns {SaveDialogOptions} The save dialog filter.
- */
-const getDialogFilter = (translate: LocalizeFunction, data: FileTabData): SaveDialogOptions => {
-    const result: SaveDialogOptions =
-        data.script_language === "typescript"
-            ? { filters: [{ name: translate("typeScriptFiles", "TypeScript files"), extensions: ["ts"] }] }
-            : { filters: [{ name: translate("javaScriptFiles", "JavaScript files"), extensions: ["js"] }] };
-
-    result.defaultPath = data.file_name_path ?? data.file_name;
-
-    return result;
-};
-
-/**
- * Returns the open dialog filter.
- * @returns {OpenDialogOptions} The open dialog filter.
- */
-const getOpenDialogFilter = (translate: LocalizeFunction) => ({ filters: [{ name: translate("scriptFiles", "Script Files"), extensions: ["js", "ts"] }] });
 
 const SyledApp = styled(App)`
     height: 100%;

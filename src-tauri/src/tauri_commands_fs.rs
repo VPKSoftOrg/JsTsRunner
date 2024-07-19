@@ -25,6 +25,7 @@ SOFTWARE.
 use std::path::Path;
 
 use chrono::{DateTime, Utc};
+use rust_i18n::t;
 use tauri::State;
 use tokio::{
     fs::{self, File},
@@ -72,7 +73,7 @@ impl TauriCommands {
                         evalueate_per_line: tab.evalueate_per_line,
                     },
                     None => {
-                        return Err("Failed to find the file in application state.".to_string());
+                        return Err(t!("messages.failedFindFileBackendState").into_owned());
                     }
                 }
             }
@@ -92,11 +93,11 @@ impl TauriCommands {
         let path = Path::new(path);
         match Path::try_exists(path) {
             Ok(exists) => {
-                if (!exists) {
+                if !exists {
                     return Ok(false);
                 }
             }
-            Err(e) => {
+            Err(_) => {
                 return Ok(false);
             }
         };
@@ -131,7 +132,7 @@ impl TauriCommands {
                         tab.modified_at = modified_at;
                     }
                     None => {
-                        return Err("Failed to find the file in application state.".to_string());
+                        return Err(t!("messages.failedFindFileBackendState").into_owned());
                     }
                 }
             }
@@ -174,7 +175,7 @@ impl TauriCommands {
                         evalueate_per_line: tab.evalueate_per_line,
                     },
                     None => {
-                        return Err("Failed to find the file in application state.".to_string());
+                        return Err(t!("messages.failedFindFileBackendState").into_owned());
                     }
                 }
             }
@@ -219,7 +220,7 @@ impl TauriCommands {
             Ok(meta_data) => {
                 if meta_data.len() > 10000000 {
                     // Limit the file size to 10 MB
-                    panic!("File is too large. The [hard-coded] limit is 10 MB.");
+                    return Err(t!("messages.fileTooLargeHardCoded", file = file_name).into_owned());
                 }
 
                 match meta_data.modified() {
@@ -328,14 +329,14 @@ impl TauriCommands {
                             Some(file_name_path) => file_name_path.clone(),
 
                             None => {
-                                return Err("The file name and path is not specified.".to_string());
+                                return Err(t!("messages.filePathNotSpecified").into_owned());
                             }
                         };
 
                         file_name_path
                     }
                     None => {
-                        return Err("Failed to find the file in application state.".to_string());
+                        return Err(t!("messages.failedFindFileBackendState").into_owned());
                     }
                 }
             }
@@ -360,7 +361,7 @@ impl TauriCommands {
                         tab.modified_at = data_file.1;
                         tab.modified_at_state = data_file.1;
                     }
-                    None => return Err("Failed to find the file in application state.".to_string()),
+                    None => return Err(t!("messages.failedFindFileBackendState").into_owned()),
                 }
             }
             Err(e) => {
@@ -370,6 +371,14 @@ impl TauriCommands {
         Ok(true)
     }
 
+    /// Sets the file as temporary in the application state.
+    ///
+    /// # Arguments
+    /// `data` - The data of the file to set as temporary.
+    /// `app_state` - The Tauri application state.
+    ///
+    /// # Returns
+    /// `true` if the file was set as temporary successfully; Error otherwise.
     pub async fn set_current_file_keep_in_editor(
         data: FileTabData,
         app_state: &State<'_, AppState>,
@@ -385,7 +394,7 @@ impl TauriCommands {
                         tab.modified_at_state = Some(Utc::now());
                     }
                     None => {
-                        return Err("Failed to find the file in application state.".to_string());
+                        return Err(t!("messages.failedFindFileBackendState").into_owned());
                     }
                 }
             }
@@ -418,7 +427,7 @@ impl TauriCommands {
                 match tab {
                     Some(tab) => tab.clone(),
                     None => {
-                        return Err("Failed to find the file in application state.".to_string());
+                        return Err(t!("messages.failedFindFileBackendState").into_owned());
                     }
                 }
             }
@@ -435,7 +444,7 @@ impl TauriCommands {
             match Path::try_exists(path) {
                 Ok(exists) => {
                     if !exists {
-                        return Err("The file does not exist.".to_string());
+                        return Err(t!("messages.theFileDoesNotExist").into_owned());
                     }
                 }
                 Err(e) => {
@@ -446,7 +455,7 @@ impl TauriCommands {
 
         // Verify that the file name and path are specified.
         if file_name_path.is_none() && existing_data.file_name_path.is_none() {
-            return Err("The file name and path is not specified.".to_string());
+            return Err(t!("messages.filePathNotSpecified").into_owned());
         }
 
         // Determine the file name and path to save the contents into.
@@ -455,7 +464,7 @@ impl TauriCommands {
             None => match &existing_data.file_name_path {
                 Some(file_name_path) => file_name_path.clone(),
                 None => {
-                    return Err("The file name and path is not specified.".to_string());
+                    return Err(t!("messages.filePathNotSpecified").into_owned());
                 }
             },
         };
@@ -464,7 +473,7 @@ impl TauriCommands {
         let file_contents = match data.content {
             Some(file_contents) => file_contents,
             None => {
-                return Err("The file content is not specified.".to_string());
+                return Err(t!("messages.fileContentNotSpecified").into_owned());
             }
         };
 
@@ -526,7 +535,7 @@ impl TauriCommands {
                     Some(tab) => {
                         *tab = existing_data;
                     }
-                    None => return Err("Failed to find the file in application state.".to_string()),
+                    None => return Err(t!("messages.failedFindFileBackendState").into_owned()),
                 }
             }
             Err(e) => {

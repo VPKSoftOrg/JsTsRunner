@@ -25,8 +25,8 @@ SOFTWARE.
 import * as React from "react";
 import { styled } from "styled-components";
 import classNames from "classnames";
-import { Tabs } from "antd";
 import { Editor } from "@monaco-editor/react";
+import { Tab } from "rc-tabs/lib/interface";
 import { CommonProps, FileTabData, ScriptType } from "../Types";
 import { useDebounce } from "../../hooks/useDebounce";
 import { JavaScriptLogo, TypeScriptLogo } from "../../utilities/app/Images";
@@ -36,6 +36,7 @@ import { useTranslate } from "../../localization/Localization";
 import { NotificationType } from "../../utilities/app/Notify";
 import { evalueateValue, evalueateValueByLines } from "../../utilities/app/Code";
 import { Settings } from "../../utilities/app/Settings";
+import { DraggableTabs } from "../wrappers/DraggableTabs";
 
 /**
  * The props for the {@link TabbedEditor} component.
@@ -45,8 +46,10 @@ type TabbedEditorProps = {
     fileTabs: FileTabData[];
     activeTabKey: number;
     settings: Settings | null;
+    fileSaveQueryVisible: boolean;
+    setFileSaveQueryVisible: (value: boolean) => void;
     setActiveTabKey: (value: number) => void;
-    saveFileTabs: () => void;
+    saveFileTabs: (fileTabsOverride?: FileTabData[]) => void;
     setActiveTabScriptType: (scriptType: ScriptType) => void;
     setFileTabs: (fileTabs: FileTabData[]) => void;
     onNewOutput: (output: string | string[]) => void;
@@ -65,6 +68,8 @@ const TabbedEditorComponent = ({
     fileTabs = [],
     activeTabKey,
     settings,
+    fileSaveQueryVisible,
+    setFileSaveQueryVisible,
     setActiveTabKey,
     saveFileTabs,
     setActiveTabScriptType,
@@ -73,13 +78,16 @@ const TabbedEditorComponent = ({
     saveTab,
     notification,
 }: TabbedEditorProps) => {
-    const [fileSaveQueryVisible, setFileSaveQueryVisible] = React.useState(false);
     const [saveQueryResult, setSaveQueryResult] = React.useState<DialogResult | undefined>();
+    const [tabItems, setTabItems] = React.useState<Tab[]>([]);
+    const beingDragged = React.useRef<boolean>(false);
+
     const fileNameRef = React.useRef<string>("");
     const keyRef = React.useRef<number>(0);
     // The i18n translation hook.
     const { translate } = useTranslate();
 
+    // The active tab changed.
     const onTabChange = React.useCallback(
         (activeTabKey?: string) => {
             const newKey = Number.parseInt(activeTabKey ?? "0");
@@ -90,6 +98,7 @@ const TabbedEditorComponent = ({
         [fileTabs, setActiveTabKey, setActiveTabScriptType]
     );
 
+    // The active tab's content changed.
     const onEditValueChange = React.useCallback(
         (value: string | undefined) => {
             const newTabs = [...fileTabs];
@@ -101,8 +110,9 @@ const TabbedEditorComponent = ({
         [activeTabKey, fileTabs, setFileTabs]
     );
 
-    const tabItems = React.useMemo(() => {
-        const items = [];
+    // Use an effect to update the tab items instead of memoizing them to allow reordering.
+    React.useEffect(() => {
+        const items: Tab[] = [];
 
         for (const tab of fileTabs) {
             items.push({
@@ -123,27 +133,37 @@ const TabbedEditorComponent = ({
             });
         }
 
-        return items;
+        setTabItems(items);
     }, [darkMode, fileTabs, onEditValueChange]);
 
+    // Set the active tab key if there are opened tabs and the active tab key is not valid.
     React.useEffect(() => {
         if (fileTabs.length > 0 && !fileTabs.some(f => f.uid === activeTabKey)) {
             setActiveTabKey(fileTabs[0].uid);
         }
     }, [fileTabs, activeTabKey, setActiveTabKey]);
 
-    const evalueateCallback = React.useCallback(async () => {
+    const [newContent, setNewContent] = React.useState<{ content: string | null; script_language: ScriptType; evalueate_per_line: boolean } | null>(null);
+
+    // Keep the current tab data the same if it has not actually been changed, so the code won't be re-evaluated all the time.
+    React.useEffect(() => {
         const tab = fileTabs.find(f => f.uid === activeTabKey);
-        const editorValue = tab?.content;
-        if (editorValue !== undefined && editorValue !== null && tab !== undefined) {
+        if (tab && (newContent?.content !== tab.content || newContent?.script_language !== tab.script_language || newContent?.evalueate_per_line !== tab.evalueate_per_line)) {
+            setNewContent({ content: tab.content, script_language: tab.script_language, evalueate_per_line: tab.evalueate_per_line });
+        }
+    }, [activeTabKey, fileTabs, newContent?.content, newContent?.evalueate_per_line, newContent?.script_language]);
+
+    // Evaluate the active tab's code.
+    const evalueateCallback = React.useCallback(async () => {
+        if (newContent && (newContent.content ?? null) !== null) {
             let value: string | string[] = "";
 
             try {
-                if (tab?.evalueate_per_line && settings) {
-                    value = await evalueateValueByLines(editorValue, settings.skip_undefined_on_js, settings.skip_empty_on_js, tab.script_language);
+                if (newContent.evalueate_per_line && settings) {
+                    value = await evalueateValueByLines(newContent.content, settings.skip_undefined_on_js, settings.skip_empty_on_js, newContent.script_language);
                     value = value.map(f => `${translate("line", "Line")} ${f}`);
                 } else {
-                    value = await evalueateValue(editorValue, true, tab.script_language);
+                    value = await evalueateValue(newContent.content, true, newContent.script_language);
                 }
             } catch (error) {
                 notification("error", error);
@@ -151,23 +171,30 @@ const TabbedEditorComponent = ({
 
             onNewOutput(value);
         }
-    }, [activeTabKey, fileTabs, notification, onNewOutput, settings, translate]);
+    }, [newContent, notification, onNewOutput, settings, translate]);
 
-    useDebounce(evalueateCallback, 1_500);
+    // Don't debounce the evaluation if the user is dragging a tab.
+    const postponeDebounce = React.useCallback(() => {
+        return beingDragged.current;
+    }, []);
 
+    useDebounce(evalueateCallback, 1_500, postponeDebounce);
+
+    // Removes the tab with the provided key.
     const removeTabByKey = React.useCallback(
         (key: number) => {
             const newTabs = [...fileTabs];
             const index = newTabs.findIndex(f => f.uid === key);
             newTabs.splice(index, 1);
             setFileTabs(newTabs);
-            saveFileTabs();
+            saveFileTabs(newTabs);
             setSaveQueryResult(undefined);
             keyRef.current = 0;
         },
         [fileTabs, setFileTabs, saveFileTabs]
     );
 
+    // Occurs if a tab was removed or added. In this case only react on the removed case.
     const onTabEdit = React.useCallback(
         (key: React.MouseEvent | React.KeyboardEvent | string, action: "add" | "remove") => {
             if (action === "remove") {
@@ -194,9 +221,10 @@ const TabbedEditorComponent = ({
                 }
             }
         },
-        [fileTabs, removeTabByKey, saveQueryResult]
+        [fileTabs, removeTabByKey, saveQueryResult, setFileSaveQueryVisible]
     );
 
+    // React to the save query popup result.
     React.useEffect(() => {
         if (saveQueryResult === DialogResult.Yes || saveQueryResult === DialogResult.No) {
             const newTabs = [...fileTabs];
@@ -207,7 +235,7 @@ const TabbedEditorComponent = ({
                             const index = newTabs.findIndex(f => f.uid === keyRef.current);
                             newTabs.splice(index, 1);
                             setFileTabs(newTabs);
-                            saveFileTabs();
+                            saveFileTabs(newTabs);
                             removeTabByKey(keyRef.current);
                         }
                     })
@@ -219,6 +247,7 @@ const TabbedEditorComponent = ({
         }
     }, [fileTabs, notification, removeTabByKey, saveFileTabs, saveQueryResult, saveTab, setFileTabs]);
 
+    // Close the save query popup and set the result to the state.
     const onFileSaveQueryClose = React.useCallback(
         (result: DialogResult) => {
             setSaveQueryResult(result);
@@ -227,9 +256,30 @@ const TabbedEditorComponent = ({
         [setFileSaveQueryVisible]
     );
 
+    // Reorder the tab contents based on the order in the changed file tabs array.
+    const onItemsReordered = React.useCallback(
+        (value: Tab[]) => {
+            const newTabs: FileTabData[] = [];
+            for (const tabItem of value) {
+                const tab = fileTabs.find(t => t.uid === Number.parseInt(tabItem.key));
+                if (tab) {
+                    newTabs.push(tab);
+                }
+            }
+
+            saveFileTabs(newTabs);
+        },
+        [fileTabs, saveFileTabs]
+    );
+
+    // Indicate that a tab is being dragged.
+    const onDraggingChanged = React.useCallback((dragging: boolean) => {
+        beingDragged.current = dragging;
+    }, []);
+
     return (
         <>
-            <Tabs //
+            <DraggableTabs //
                 className={classNames(TabbedEditor.name, className)}
                 items={tabItems}
                 activeKey={activeTabKey.toString()}
@@ -237,6 +287,9 @@ const TabbedEditorComponent = ({
                 hideAdd
                 onChange={onTabChange}
                 onEdit={onTabEdit}
+                setItems={setTabItems}
+                onItemsReordered={onItemsReordered}
+                onDraggingChanged={onDraggingChanged}
             />
             <ConfirmPopup //
                 visible={fileSaveQueryVisible}

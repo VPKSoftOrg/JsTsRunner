@@ -113,4 +113,28 @@ impl TauriCommands {
             }
         }
     }
+
+    /// Checks if a file is opened in the application state.
+    ///
+    /// # Arguments
+    /// `file_name` - The name of the file to check.
+    /// `app_state` - The Tauri application state.
+    ///
+    /// # Returns
+    /// `true` if the file is opened; `false` otherwise. Error in case of failure.
+    pub async fn is_file_opened(
+        file_name: String,
+        app_state: &State<'_, AppState>,
+    ) -> Result<bool, String> {
+        match app_state.file_tabs.lock() {
+            Ok(tabs) => {
+                return Ok(tabs
+                    .iter()
+                    .any(|f| f.file_name_path == Some(file_name.clone())));
+            }
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        }
+    }
 }

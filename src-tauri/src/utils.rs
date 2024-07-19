@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 use chrono::{DateTime, Utc};
+use tauri::{AppHandle, Manager};
 use tokio::fs;
 
 pub fn first_missing_in_sequence(vec: &Vec<i32>) -> i32 {
@@ -62,4 +63,19 @@ pub async fn get_file_contents_and_modified_at(
     };
 
     Ok((content, modified_at))
+}
+
+pub fn show_window(app: &AppHandle) {
+    let windows = app.webview_windows();
+
+    windows
+        .values()
+        .next()
+        .expect(t!("messages.appMainWindowMissing").into_owned().as_str())
+        .set_focus()
+        .expect(
+            t!("messages.appMainWindowFocusedFailed")
+                .into_owned()
+                .as_str(),
+        );
 }

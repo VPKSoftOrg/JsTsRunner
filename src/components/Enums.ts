@@ -79,3 +79,15 @@ export enum PopupType {
     /** The popup is a warning popup. */
     Warning,
 }
+
+/**
+ * An enumeration for a popup type for the {@link MessagePopup} and other popups.
+ */
+export enum PopupTypeOk {
+    /** The popup is an information popup. */
+    Information,
+    /** The popup is an warning popup. */
+    Warning,
+    /** The popup is a error popup. */
+    Error,
+}
