@@ -8,6 +8,7 @@ A software to evaluate JavaScript / TypeScript code.
 * Has an internal memory so the files / tab contents doesn't need to be saved on close
 * Can transpile TypeScript to JavaScript
 * Can evaluate the code either line by line or the entire file at once
+* Supported locales: English, Finnish
 
 (1) *NOT TESTED*
 
@@ -40,3 +41,9 @@ To run, debug and modify the source code, read the instruction from the [templat
 * [Ant Design](https://ant.design)
 * [Monaco Editor for React](https://github.com/suren-atoyan/monaco-react)
 * [Rusty V8](https://github.com/denoland/rusty_v8)
+
+## Localize to your language
+[Crowdin](https://crowdin.com/project/jstsrunner) is used for the software localization, so contact me if you wish to contribute.
+
+ <a href="https://crowdin.com"><img src="https://github.com/user-attachments/assets/6a541410-750a-40db-b345-903789010b9b" width="200px" /></a>
+
