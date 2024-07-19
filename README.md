@@ -15,6 +15,22 @@ A software to evaluate JavaScript / TypeScript code.
 ## Source code
 To run, debug and modify the source code, read the instruction from the [template](https://github.com/VPKSoftOrg/tauri_react_vite_ts_script_antd_i18next_tokio_styled_v2) the software was created from, see: [wiki](https://github.com/VPKSoftOrg/tauri_react_vite_ts_script_antd_i18next_tokio_styled_v2/wiki)
 
+# Install
+## Windows
+Download the [JsTsRunner_X.Y.Z_x64-setup.exe](https://github.com/VPKSoftOrg/JsTsRunner/releases/), ignore the warnings and install the software.
+If the installation fails you may need to install webview2, See: https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section
+
+## Linux
+1. Download the [JsTsRunner_X.Y.Z_amd64.AppImage](https://github.com/VPKSoftOrg/JsTsRunner/releases/)
+2. Run `chmod +x JsTsRunner_X.Y.Z_amd64.AppImage` on the file.
+3. Run the JsTsRunner_X.Y.Z_amd64.AppImage file.
+
+## macOS
+1. Download the [JsTsRunner_x64.app.tar.gz](https://github.com/VPKSoftOrg/JsTsRunner/releases/)
+2. Extract the `JsTsRunner.app` from the file
+3. Run `xattr -c JsTsRunner.app` on the file.
+4. Run the `JsTsRunner.app`
+
 ## Screenshots
 *A TypeScript file in an entire file evaluation mode*
 
@@ -43,7 +59,7 @@ To run, debug and modify the source code, read the instruction from the [templat
 * [Rusty V8](https://github.com/denoland/rusty_v8)
 
 ## Localize to your language
-[Crowdin](https://crowdin.com/project/jstsrunner) is used for the software localization, so contact me if you wish to contribute.
+[Crowdin](https://crowdin.com/project/jstsrunner) is used for the software localization, so [contact me](https://github.com/VPKSoft) if you wish to contribute.
 
  <a href="https://crowdin.com"><img src="https://github.com/user-attachments/assets/6a541410-750a-40db-b345-903789010b9b" width="200px" /></a>
 
