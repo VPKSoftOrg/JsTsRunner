@@ -180,12 +180,14 @@ impl TauriCommands {
         let mut result_all: Vec<String> = Vec::new();
 
         for i in 0..code.len() {
+            set_file_line(Some(i as i32));
+
             // Skip empty lines
             if code[i].trim() == "" {
+                result_all.push("".into());
                 continue;
             }
 
-            set_file_line(Some(i as i32));
             let code = code[i].as_str();
 
             let scope = &mut v8::ContextScope::new(scope, context);
