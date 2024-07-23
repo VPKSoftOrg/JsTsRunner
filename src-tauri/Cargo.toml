@@ -1,13 +1,13 @@
-[lib]
-name = "app_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
-
 [package]
 name = "js_ts_runner"
-version = "0.1.0"
+version = "0.1.1"
 description = "A simple program to evaluate JavaScript or TypeScript"
 authors = ["VPKSoft"]
 edition = "2021"
+
+[lib]
+name = "app_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -30,6 +30,7 @@ tauri-plugin-dialog = "2.0.0-beta.11"
 chrono = { version = "0.4.38", features = ["serde"] }
 tauri-plugin-os = "2.0.0-beta.8"
 rust-i18n = "3.0.1"
+
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

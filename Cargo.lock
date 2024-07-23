@@ -1999,7 +1999,7 @@ dependencies = [
 
 [[package]]
 name = "js_ts_runner"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "confy",

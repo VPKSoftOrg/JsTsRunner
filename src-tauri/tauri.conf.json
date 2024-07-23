@@ -1,34 +1,14 @@
 {
+    "productName": "JsTsRunner",
+    "version": "0.1.1",
+    "identifier": "com.github.vpksoftorg.JsTsRunner",
     "build": {
         "beforeDevCommand": "npm run dev",
         "beforeBuildCommand": "npm run build",
         "frontendDist": "../dist",
         "devUrl": "http://localhost:1420"
     },
-    "bundle": {
-        "active": true,
-        "targets": "all",
-        "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
-        "createUpdaterArtifacts": true
-    },
-    "productName": "JsTsRunner",
-    "version": "0.1.0",
-    "identifier": "Jstsrunner",
-    "plugins": {
-        "updater": {
-            "active": true,
-            "endpoints": ["https://github.com/VPKSoftOrg/JsTsRunner/releases/latest/download/latest.json"],
-            "dialog": false,
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlERkUyMEMxNjc2NDBENUEKUldSYURXUm53U0QrblJyNWJTOUx2TlVvUHNGNzRDMkhaNVJOdW1TQ3RjSUd1SVYzSVNTYzhpV2cK",
-            "windows": {
-                "installMode": "passive"
-            }
-        }
-    },
     "app": {
-        "security": {
-            "csp": null
-        },
         "windows": [
             {
                 "title": "JsTsRunner",
@@ -36,6 +16,34 @@
                 "height": 600,
                 "decorations": false
             }
-        ]
+        ],
+        "security": {
+            "csp": null
+        }
+    },
+    "plugins": {
+        "updater": {
+            "active": true,
+            "endpoints": [
+                "https://github.com/VPKSoftOrg/JsTsRunner/releases/latest/download/latest.json"
+            ],
+            "dialog": false,
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlERkUyMEMxNjc2NDBENUEKUldSYURXUm53U0QrblJyNWJTOUx2TlVvUHNGNzRDMkhaNVJOdW1TQ3RjSUd1SVYzSVNTYzhpV2cK",
+            "windows": {
+                "installMode": "passive"
+            }
+        }
+    },
+    "bundle": {
+        "active": true,
+        "targets": "all",
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ],
+        "createUpdaterArtifacts": true
     }
 }
