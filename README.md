@@ -21,9 +21,15 @@ Download the [JsTsRunner_X.Y.Z_x64-setup.exe](https://github.com/VPKSoftOrg/JsTs
 If the installation fails you may need to install webview2, See: https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section
 
 ## Linux
+### AppImage
 1. Download the [JsTsRunner_X.Y.Z_amd64.AppImage](https://github.com/VPKSoftOrg/JsTsRunner/releases/)
 2. Run `chmod +x JsTsRunner_X.Y.Z_amd64.AppImage` on the file.
 3. Run the JsTsRunner_X.Y.Z_amd64.AppImage file.
+### .deb package
+1. Download the [JsTsRunner_X.Y.Z_amd64.deb](https://github.com/VPKSoftOrg/JsTsRunner/releases/)
+2. Run `sudo apt-get install JsTsRunner_X.Y.Z_amd64.deb`
+3. Run the installed program.
+
 
 ## macOS
 1. Download the [JsTsRunner_x64.app.tar.gz](https://github.com/VPKSoftOrg/JsTsRunner/releases/)
