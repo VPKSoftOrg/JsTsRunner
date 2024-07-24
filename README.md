@@ -29,6 +29,9 @@ If the installation fails you may need to install webview2, See: https://develop
 1. Download the [JsTsRunner_X.Y.Z_amd64.deb](https://github.com/VPKSoftOrg/JsTsRunner/releases/)
 2. Run `sudo apt-get install JsTsRunner_X.Y.Z_amd64.deb`
 3. Run the installed program.
+### .rpm package
+1. Download the [JsTsRunner-X.Y.Z.x86_64.rpm](https://github.com/VPKSoftOrg/JsTsRunner/releases/)
+2. Run `sudo dnf install ./JsTsRunner-X.Y.Z.x86_64.rpm`
 
 
 ## macOS
