@@ -68,7 +68,7 @@ impl TauriCommands {
         let isolate = &mut v8::Isolate::new(Default::default());
 
         let scope = &mut v8::HandleScope::new(isolate);
-        let context = v8::Context::new(scope);
+        let context = v8::Context::new(scope, Default::default());
         let scope = &mut v8::ContextScope::new(scope, context);
 
         let object_template = v8::ObjectTemplate::new(scope);
@@ -86,7 +86,13 @@ impl TauriCommands {
         let name = v8::String::new(scope, "console_error").unwrap();
         object_template.set(name.into(), function_template.into());
 
-        let context = v8::Context::new_from_template(scope, object_template);
+        let context = v8::Context::new(
+            scope,
+            v8::ContextOptions {
+                global_template: Some(object_template),
+                ..Default::default()
+            },
+        );
 
         let scope = &mut v8::ContextScope::new(scope, context);
 
@@ -157,7 +163,7 @@ impl TauriCommands {
         let isolate = &mut v8::Isolate::new(Default::default());
 
         let scope = &mut v8::HandleScope::new(isolate);
-        let context = v8::Context::new(scope);
+        let context = v8::Context::new(scope, Default::default());
         let scope = &mut v8::ContextScope::new(scope, context);
 
         let object_template = v8::ObjectTemplate::new(scope);
@@ -175,7 +181,13 @@ impl TauriCommands {
         let name = v8::String::new(scope, "console_error").unwrap();
         object_template.set(name.into(), function_template.into());
 
-        let context = v8::Context::new_from_template(scope, object_template);
+        let context = v8::Context::new(
+            scope,
+            v8::ContextOptions {
+                global_template: Some(object_template),
+                ..Default::default()
+            },
+        );
 
         let mut result_all: Vec<String> = Vec::new();
 
