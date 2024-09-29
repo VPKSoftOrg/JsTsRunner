@@ -389,13 +389,13 @@ const App = ({ className }: AppProps) => {
                     void open(getOpenDialogFilter(translate))
                         .then(files => {
                             if (files) {
-                                isFileOpened(files.path)
+                                isFileOpened(files)
                                     .then(opened => {
                                         if (opened) {
-                                            setMessagePopupMessage(translate("fileAlreadyOpened", "The file '{{file}}' is already opened in the editor.", { file: files.path }));
+                                            setMessagePopupMessage(translate("fileAlreadyOpened", "The file '{{file}}' is already opened in the editor.", { file: files }));
                                             setMessagePopupVisible(true);
                                         } else {
-                                            void openExistingFileWrapped(files.path).catch(error => notification("error", error));
+                                            void openExistingFileWrapped(files).catch(error => notification("error", error));
                                         }
                                     })
                                     .catch(error => notification("error", error));
