@@ -22,12 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+import Select from "antd/es/select";
+import classNames from "classnames";
+import type { FieldNames } from "rc-select/lib/Select";
 import * as React from "react";
 import { styled } from "styled-components";
-import classNames from "classnames";
-import Select from "antd/es/select";
-import { FieldNames } from "rc-select/lib/Select";
-import { CommonProps } from "../Types";
+import type { CommonProps } from "../Types";
 
 /**
  * The props for the {@link SelectWithLabel} component.

@@ -1,16 +1,29 @@
+import {
+    faArrowsRotate,
+    faCodeFork,
+    faDoorOpen,
+    faGear,
+    faInfo,
+    faListOl,
+    faPlus,
+    faScrewdriver,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 //@ts-expect-error - React is required for JSX
 import * as React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowsRotate, faCodeFork, faDoorOpen, faGear, faInfo, faListOl, faPlus, faScrewdriver } from "@fortawesome/free-solid-svg-icons";
-import { LocalizeFunction } from "../localization/Localization";
+import type { LocalizeFunction } from "../localization/Localization";
 
 import { SaveAsIcon, SaveIcon } from "../img/ImageExports";
-import { ToolBarItem, ToolBarSeparator } from "./AppToolbar";
-import { MenuKeys } from "./MenuItems";
+import type { ToolBarItem, ToolBarSeparator } from "./AppToolbar";
+import type { MenuKeys } from "./MenuItems";
 
 type ToolBarItems = "scriptType";
 
-export const appToolbarItems = (localize?: LocalizeFunction, darkMode?: boolean, disabledItems?: (MenuKeys | ToolBarItems)[]): (ToolBarItem<MenuKeys> | ToolBarSeparator)[] => [
+export const appToolbarItems = (
+    localize?: LocalizeFunction,
+    darkMode?: boolean,
+    disabledItems?: (MenuKeys | ToolBarItems)[]
+): (ToolBarItem<MenuKeys> | ToolBarSeparator)[] => [
     {
         icon: <FontAwesomeIcon icon={faGear} />,
         title: localize?.("preferences") ?? "Preferences",

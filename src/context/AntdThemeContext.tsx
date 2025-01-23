@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import { ConfigProvider, GlobalToken, theme } from "antd";
+import { ConfigProvider, type GlobalToken, theme } from "antd";
 import * as React from "react";
 
 /**
@@ -37,7 +37,11 @@ type ThemeContextPayload = {
 /**
  * The context for the theming.
  */
-const ThemeContext = React.createContext<ThemeContextPayload>({ setTheme: null, updateBackround: null, antdTheme: "light" });
+const ThemeContext = React.createContext<ThemeContextPayload>({
+    setTheme: null,
+    updateBackround: null,
+    antdTheme: "light",
+});
 
 type Props = {
     children?: React.ReactNode;

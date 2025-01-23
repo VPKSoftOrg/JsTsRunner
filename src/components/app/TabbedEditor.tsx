@@ -22,20 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+import { Editor } from "@monaco-editor/react";
+import classNames from "classnames";
+import type { Tab } from "rc-tabs/lib/interface";
 import * as React from "react";
 import { styled } from "styled-components";
-import classNames from "classnames";
-import { Editor } from "@monaco-editor/react";
-import { Tab } from "rc-tabs/lib/interface";
-import { CommonProps, FileTabData, ScriptType } from "../Types";
-import { useDebounce } from "../../hooks/useDebounce";
-import { JavaScriptLogo, TypeScriptLogo } from "../../utilities/app/Images";
-import { ConfirmPopup } from "../popups/ConfirmPopup";
-import { DialogButtons, DialogResult, PopupType } from "../Enums";
+import { useDebounce } from "../../hooks/UseDebounce";
 import { useTranslate } from "../../localization/Localization";
-import { NotificationType } from "../../utilities/app/Notify";
 import { evalueateValue, evalueateValueByLines } from "../../utilities/app/Code";
-import { Settings } from "../../utilities/app/Settings";
+import { JavaScriptLogo, TypeScriptLogo } from "../../utilities/app/Images";
+import type { NotificationType } from "../../utilities/app/Notify";
+import type { Settings } from "../../utilities/app/Settings";
+import { DialogButtons, DialogResult, PopupType } from "../Enums";
+import type { CommonProps, FileTabData, ScriptType } from "../Types";
+import { ConfirmPopup } from "../popups/ConfirmPopup";
 import { DraggableTabs } from "../wrappers/DraggableTabs";
 
 /**
@@ -54,7 +54,11 @@ type TabbedEditorProps = {
     setFileTabs: (fileTabs: FileTabData[]) => void;
     onNewOutput: (output: string | string[]) => void;
     saveTab: (activeTabKey: number) => Promise<boolean>;
-    notification: (type: NotificationType, title: string | null | undefined | Error | unknown, duration?: number) => void;
+    notification: (
+        type: NotificationType,
+        title: string | null | undefined | Error | unknown,
+        duration?: number
+    ) => void;
 } & CommonProps;
 
 /**
@@ -120,7 +124,14 @@ const TabbedEditorComponent = ({
                 key: tab.uid.toString(),
                 closable: true,
                 className: "TabPane",
-                icon: <img className="IconStyle" src={tab.script_language === "typescript" ? TypeScriptLogo : JavaScriptLogo} width="16px" height="16px" />,
+                icon: (
+                    <img
+                        className="IconStyle"
+                        src={tab.script_language === "typescript" ? TypeScriptLogo : JavaScriptLogo}
+                        width="16px"
+                        height="16px"
+                    />
+                ),
                 children: (
                     <Editor //
                         className="Editor"
@@ -143,13 +154,26 @@ const TabbedEditorComponent = ({
         }
     }, [fileTabs, activeTabKey, setActiveTabKey]);
 
-    const [newContent, setNewContent] = React.useState<{ content: string | null; script_language: ScriptType; evalueate_per_line: boolean } | null>(null);
+    const [newContent, setNewContent] = React.useState<{
+        content: string | null;
+        script_language: ScriptType;
+        evalueate_per_line: boolean;
+    } | null>(null);
 
     // Keep the current tab data the same if it has not actually been changed, so the code won't be re-evaluated all the time.
     React.useEffect(() => {
         const tab = fileTabs.find(f => f.uid === activeTabKey);
-        if (tab && (newContent?.content !== tab.content || newContent?.script_language !== tab.script_language || newContent?.evalueate_per_line !== tab.evalueate_per_line)) {
-            setNewContent({ content: tab.content, script_language: tab.script_language, evalueate_per_line: tab.evalueate_per_line });
+        if (
+            tab &&
+            (newContent?.content !== tab.content ||
+                newContent?.script_language !== tab.script_language ||
+                newContent?.evalueate_per_line !== tab.evalueate_per_line)
+        ) {
+            setNewContent({
+                content: tab.content,
+                script_language: tab.script_language,
+                evalueate_per_line: tab.evalueate_per_line,
+            });
         }
     }, [activeTabKey, fileTabs, newContent?.content, newContent?.evalueate_per_line, newContent?.script_language]);
 
@@ -160,7 +184,12 @@ const TabbedEditorComponent = ({
 
             try {
                 if (newContent.evalueate_per_line && settings) {
-                    value = await evalueateValueByLines(newContent.content, settings.skip_undefined_on_js, settings.skip_empty_on_js, newContent.script_language);
+                    value = await evalueateValueByLines(
+                        newContent.content,
+                        settings.skip_undefined_on_js,
+                        settings.skip_empty_on_js,
+                        newContent.script_language
+                    );
                     value = value.map(f => `${translate("line", "Line")} ${f}`);
                 } else {
                     value = await evalueateValue(newContent.content, true, newContent.script_language);
@@ -202,7 +231,10 @@ const TabbedEditorComponent = ({
                 if (typeof key === "string") {
                     keyRef.current = Number.parseInt(key);
                     const index = newTabs.findIndex(f => f.uid === keyRef.current);
-                    if (newTabs[index].modified_at_state === newTabs[index].modified_at && newTabs[index].file_name_path !== null) {
+                    if (
+                        newTabs[index].modified_at_state === newTabs[index].modified_at &&
+                        newTabs[index].file_name_path !== null
+                    ) {
                         removeTabByKey(keyRef.current);
                         return;
                     }
@@ -294,7 +326,9 @@ const TabbedEditorComponent = ({
             <ConfirmPopup //
                 visible={fileSaveQueryVisible}
                 mode={PopupType.Confirm}
-                message={translate("saveFileBeforeClose", "Save the file '{{file}}' before closing it?", { file: fileNameRef.current })}
+                message={translate("saveFileBeforeClose", "Save the file '{{file}}' before closing it?", {
+                    file: fileNameRef.current,
+                })}
                 buttons={DialogButtons.Yes | DialogButtons.No | DialogButtons.Cancel}
                 onClose={onFileSaveQueryClose}
             />

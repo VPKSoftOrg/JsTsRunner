@@ -1,23 +1,15 @@
+import { Editor } from "@monaco-editor/react";
 import * as React from "react";
 import { styled } from "styled-components";
-import { Editor } from "@monaco-editor/react";
 import "./App.css";
-import classNames from "classnames";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { StyledTitle } from "./components/app/WindowTitle";
-import { useTranslate } from "./localization/Localization";
-import { MenuKeys } from "./menu/MenuItems";
-import { AboutPopup } from "./components/popups/AboutPopup";
-import { PreferencesPopup } from "./components/popups/PreferencesPopup";
-import { useSettings } from "./utilities/app/Settings";
-import { useWindowStateSaver } from "./hooks/UseWindowStateListener";
-import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
-import { CommonProps, FileTabData, ScriptType } from "./components/Types";
-import { AppMenuToolbar } from "./menu/AppMenuToolbar";
+import classNames from "classnames";
+import { DialogButtons, DialogResult, PopupType, PopupTypeOk } from "./components/Enums";
+import type { CommonProps, FileTabData, ScriptType } from "./components/Types";
 import { TabbedEditor } from "./components/app/TabbedEditor";
 import {
-    AppStateResult,
+    type AppStateResult,
     addNewTab,
     getAppState,
     getNewTabId,
@@ -35,15 +27,23 @@ import {
     test_function_call,
     updateOpenTabs,
 } from "./components/app/TauriWrappers";
-import { useNotify } from "./utilities/app/Notify";
-import { useDebounce } from "./hooks/useDebounce";
-import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
-import { ToolBarItems } from "./menu/ToolbarItems";
-import { DialogButtons, DialogResult, PopupType, PopupTypeOk } from "./components/Enums";
+import { StyledTitle } from "./components/app/WindowTitle";
+import { AboutPopup } from "./components/popups/AboutPopup";
 import { ConfirmPopup } from "./components/popups/ConfirmPopup";
+import { MessagePopup } from "./components/popups/MessagePopup";
+import { PreferencesPopup } from "./components/popups/PreferencesPopup";
+import { useAntdTheme, useAntdToken } from "./context/AntdThemeContext";
+import { useDebounce } from "./hooks/UseDebounce";
+import { useWindowStateSaver } from "./hooks/UseWindowStateListener";
+import { useTranslate } from "./localization/Localization";
+import { AppMenuToolbar } from "./menu/AppMenuToolbar";
+import type { MenuKeys } from "./menu/MenuItems";
+import type { ToolBarItems } from "./menu/ToolbarItems";
 import { evalueateValue, evalueateValueByLines } from "./utilities/app/Code";
 import { genNewTab, getDialogFilter, getOpenDialogFilter, saveTab } from "./utilities/app/FileTabs";
-import { MessagePopup } from "./components/popups/MessagePopup";
+import { useNotify } from "./utilities/app/Notify";
+import { useSettings } from "./utilities/app/Settings";
+import { transpileTypeSctiptToJs } from "./utilities/app/TypeSciptTranspile";
 
 type AppProps = CommonProps;
 
@@ -70,7 +70,10 @@ const App = ({ className }: AppProps) => {
     const [settings, settingsLoaded, updateSettings, reloadSettings] = useSettings(settingsErrorCallback);
     const [appStateLoaded, setAppStateLoaded] = React.useState<boolean>(false);
     const [previewDarkMode, setPreviewDarkMode] = React.useState<boolean | null>(null);
-    const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: unknown }>({ language: "javascript", oneLineEvaluation: false });
+    const [selectedValues, setSelectedValues] = React.useState<{ [key: string]: unknown }>({
+        language: "javascript",
+        oneLineEvaluation: false,
+    });
     const [fileTabs, setFileTabs] = React.useState<FileTabData[]>([]);
     const [activeTabKey, setActiveTabKey] = React.useState(0);
     const [disabledItems, setDisabledItems] = React.useState<(MenuKeys | ToolBarItems)[]>([]);
@@ -114,7 +117,12 @@ const App = ({ className }: AppProps) => {
             const tabScript = fileTabs.find(tab => tab.uid === activeTabKey);
             if (tabScript && settings) {
                 if (tabScript.evalueate_per_line) {
-                    evalueateValueByLines(tabScript.content, settings.skip_undefined_on_js, settings.skip_empty_on_js, tabScript.script_language)
+                    evalueateValueByLines(
+                        tabScript.content,
+                        settings.skip_undefined_on_js,
+                        settings.skip_empty_on_js,
+                        tabScript.script_language
+                    )
                         .then(value => {
                             setEvaluationResult(value.map(f => `${translate("line", "Line")} ${f}`));
                         })
@@ -392,10 +400,18 @@ const App = ({ className }: AppProps) => {
                                 isFileOpened(files)
                                     .then(opened => {
                                         if (opened) {
-                                            setMessagePopupMessage(translate("fileAlreadyOpened", "The file '{{file}}' is already opened in the editor.", { file: files }));
+                                            setMessagePopupMessage(
+                                                translate(
+                                                    "fileAlreadyOpened",
+                                                    "The file '{{file}}' is already opened in the editor.",
+                                                    { file: files }
+                                                )
+                                            );
                                             setMessagePopupVisible(true);
                                         } else {
-                                            void openExistingFileWrapped(files).catch(error => notification("error", error));
+                                            void openExistingFileWrapped(files).catch(error =>
+                                                notification("error", error)
+                                            );
                                         }
                                     })
                                     .catch(error => notification("error", error));
@@ -432,7 +448,10 @@ const App = ({ className }: AppProps) => {
                                 let newFileName = translate("newFileWithIndex", "New file {{index}}", { index: uid });
                                 newFileName += ".js";
 
-                                void addNewTab(genNewTab("javascript", newFileName), transpileTypeSctiptToJs(fileTabs[index].content ?? "", true))
+                                void addNewTab(
+                                    genNewTab("javascript", newFileName),
+                                    transpileTypeSctiptToJs(fileTabs[index].content ?? "", true)
+                                )
                                     .then(() => {
                                         saveAppStateReload().catch(error => notification("error", error));
                                     })
@@ -440,7 +459,13 @@ const App = ({ className }: AppProps) => {
                             })
                             .catch(error => notification("error", error));
                     } else {
-                        notification("info", translate("currentMustBeTsFile", "The current file type must be a TypeScript file in order to convert it to JavaScript."));
+                        notification(
+                            "info",
+                            translate(
+                                "currentMustBeTsFile",
+                                "The current file type must be a TypeScript file in order to convert it to JavaScript."
+                            )
+                        );
                     }
 
                     break;
@@ -542,7 +567,7 @@ const App = ({ className }: AppProps) => {
                     notification("error", error);
                 });
         };
-    }, [appWindow, fileTabs, focusChangedCallback, notification]);
+    }, [appWindow, focusChangedCallback, notification]);
 
     // A callback to close the preferences popup.
     const onPreferencesClose = React.useCallback(() => {
@@ -573,12 +598,9 @@ const App = ({ className }: AppProps) => {
     );
 
     // A callback to set the script evaluation result in the state.
-    const onNewOutput = React.useCallback(
-        (output: string | string[]) => {
-            setEvaluationResult(output);
-        },
-        [setEvaluationResult]
-    );
+    const onNewOutput = React.useCallback((output: string | string[]) => {
+        setEvaluationResult(output);
+    }, []);
 
     // A callback to set Select component(s) values from the tool bar into the state.
     const onSelectedValueChanged = React.useCallback(
@@ -591,7 +613,7 @@ const App = ({ className }: AppProps) => {
     );
 
     // A callback to set the script language in the state when the selected tab page changed.
-    const setScriptStype = React.useCallback(
+    const setScriptType = React.useCallback(
         (value: ScriptType) => {
             setSelectedValues({ ...selectedValues, language: value });
         },
@@ -692,7 +714,7 @@ const App = ({ className }: AppProps) => {
                         setActiveTabKey={setActiveTabKey}
                         onNewOutput={onNewOutput}
                         setFileTabs={setFileTabs}
-                        setActiveTabScriptType={setScriptStype}
+                        setActiveTabScriptType={setScriptType}
                         saveFileTabs={saveFileTabs}
                         saveTab={saveFileCallback}
                         notification={notification}
@@ -730,14 +752,22 @@ const App = ({ className }: AppProps) => {
             <ConfirmPopup //
                 visible={reloadConfirmVisible}
                 mode={PopupType.Confirm}
-                message={translate("fileHasBeenChangedReload", "The file '{{file}}' has been changed. Reload the file to see the changed contents.", { file: fileNameRef.current })}
+                message={translate(
+                    "fileHasBeenChangedReload",
+                    "The file '{{file}}' has been changed. Reload the file to see the changed contents.",
+                    { file: fileNameRef.current }
+                )}
                 buttons={DialogButtons.Yes | DialogButtons.No}
                 onClose={onReloadConfirmClose}
             />
             <ConfirmPopup //
                 visible={keepFileInEditorVisible}
                 mode={PopupType.Confirm}
-                message={translate("fileNoLongerExistsKeepInEditor", "The file '{{file}}' no longer exists. Keep the file in the editor?", { file: lostFileNameRef.current })}
+                message={translate(
+                    "fileNoLongerExistsKeepInEditor",
+                    "The file '{{file}}' no longer exists. Keep the file in the editor?",
+                    { file: lostFileNameRef.current }
+                )}
                 buttons={DialogButtons.Yes | DialogButtons.No}
                 onClose={keepFileInEditorConfirmClose}
             />

@@ -1,10 +1,27 @@
+import {
+    faArrowsRotate,
+    faCircleQuestion,
+    faCode,
+    faCodeFork,
+    faDoorOpen,
+    faFile,
+    faFolderOpen,
+    faGear,
+    faInfo,
+    faPlay,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 //@ts-expect-error - React is required for JSX
 import * as React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFile, faDoorOpen, faCircleQuestion, faInfo, faGear, faFolderOpen, faArrowsRotate, faPlay, faCodeFork, faCode } from "@fortawesome/free-solid-svg-icons";
-import { LocalizeFunction } from "../localization/Localization";
 import { SaveAsIcon, SaveIcon } from "../img/ImageExports";
-import { filterUsableMenuItems, ItemTypeShortcut, MenuItems, renderShortcut, SubItemTypeShortcut } from "./AppMenu";
+import type { LocalizeFunction } from "../localization/Localization";
+import {
+    type ItemTypeShortcut,
+    type MenuItems,
+    type SubItemTypeShortcut,
+    filterUsableMenuItems,
+    renderShortcut,
+} from "./AppMenu";
 
 /**
  * Creates the menu items for the application.
@@ -16,7 +33,11 @@ import { filterUsableMenuItems, ItemTypeShortcut, MenuItems, renderShortcut, Sub
  *
  * @remarks This function creates an *abstraction* to the use of the `antd` menu. Do not add more logic here to deepen the *abstraction*. If more complex logic is required, use the `antd` api directly.
  */
-export const appMenuItems = (localize?: LocalizeFunction, darkMode?: boolean, disabledItems?: MenuKeys[]): MenuItems => {
+export const appMenuItems = (
+    localize?: LocalizeFunction,
+    darkMode?: boolean,
+    disabledItems?: MenuKeys[]
+): MenuItems => {
     const result = [
         {
             key: "fileMenu",

@@ -2,16 +2,16 @@ import * as i18next from "i18next";
 import * as React from "react";
 import { initReactI18next, useTranslation } from "react-i18next";
 
-import uiEnglish from "../localization/en/ui.json";
-import messagesEnglish from "../localization/en/messages.json";
-import settingsEnglish from "../localization/en/settings.json";
 import dialogEnglish from "../localization/en/dialog.json";
 import longTextsEnglish from "../localization/en/long_texts.json";
-import uiFinnish from "../localization/fi/ui.json";
-import messagesFinnish from "../localization/fi/messages.json";
-import settingsFinnish from "../localization/fi/settings.json";
+import messagesEnglish from "../localization/en/messages.json";
+import settingsEnglish from "../localization/en/settings.json";
+import uiEnglish from "../localization/en/ui.json";
 import dialogFinnish from "../localization/fi/dialog.json";
 import longTextsFinnish from "../localization/fi/long_texts.json";
+import messagesFinnish from "../localization/fi/messages.json";
+import settingsFinnish from "../localization/fi/settings.json";
+import uiFinnish from "../localization/fi/ui.json";
 
 const localizationResources = {
     en: {
@@ -32,7 +32,12 @@ const localizationResources = {
 
 export type Locales = keyof typeof localizationResources;
 export type LocalizationResources = keyof (typeof localizationResources)[Locales];
-export type LocalizationNames = keyof typeof uiEnglish | keyof typeof messagesEnglish | keyof typeof settingsEnglish | keyof typeof dialogEnglish | keyof typeof longTextsEnglish;
+export type LocalizationNames =
+    | keyof typeof uiEnglish
+    | keyof typeof messagesEnglish
+    | keyof typeof settingsEnglish
+    | keyof typeof dialogEnglish
+    | keyof typeof longTextsEnglish;
 const resourceArray = Object.keys(localizationResources["en"]);
 
 const defaultLanguage: Locales = "en";
@@ -52,7 +57,12 @@ void i18next.use(initReactI18next).init({
  * @param {boolean?} escapeValue A value indicating whether the special characters should be escaped with interpolation. The default value is `true`.
  * @returns {string} The localized string.
  */
-export type LocalizeFunction = (entryName: LocalizationNames, defaultValue?: string, params?: unknown, escapeValue?: boolean) => string;
+export type LocalizeFunction = (
+    entryName: LocalizationNames,
+    defaultValue?: string,
+    params?: unknown,
+    escapeValue?: boolean
+) => string;
 
 export const useTranslate = () => {
     const { t, i18n } = useTranslation(resourceArray);

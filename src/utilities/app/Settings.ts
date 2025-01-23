@@ -22,9 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import * as React from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Locales } from "../../localization/Localization";
+import * as React from "react";
+import type { Locales } from "../../localization/Localization";
 
 /**
  * The software settings returned by the Tauri app.
@@ -79,7 +79,9 @@ const saveSettings = async (settings: Settings) => {
  * @param {function} onErrorCallback - Callback function to notify of any errors.
  * @return {array} An array containing the current settings, a boolean indicating if the settings are loaded, a function to update the settings, and a function to reload the settings.
  */
-const useSettings = (onErrorCallback?: (error: Error | string | unknown) => void): [Settings | null, boolean, (settings: Settings) => Promise<void>, () => Promise<void>] => {
+const useSettings = (
+    onErrorCallback?: (error: Error | string | unknown) => void
+): [Settings | null, boolean, (settings: Settings) => Promise<void>, () => Promise<void>] => {
     const [currentSettings, setCurrentSettings] = React.useState<Settings | null>(null);
 
     const reloadSettings = React.useCallback(async () => {

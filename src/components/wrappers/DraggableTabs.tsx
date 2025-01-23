@@ -1,16 +1,16 @@
 // This code is based on the And Design Tabs demo: https://ant.design/components/tabs#tabs-demo-custom-tab-bar-node
 // I just refactored it.
 
-import * as React from "react";
-import { styled } from "styled-components";
-import classNames from "classnames";
-import { TabPaneProps, Tabs, TabsProps } from "antd";
-import { CSS } from "@dnd-kit/utilities";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { DndContext, PointerSensor, closestCenter, useSensor } from "@dnd-kit/core";
-import { arrayMove, horizontalListSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
-import { Tab, RenderTabBar } from "rc-tabs/lib/interface";
-import { Cursor } from "../Types";
+import { SortableContext, arrayMove, horizontalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { type TabPaneProps, Tabs, type TabsProps } from "antd";
+import classNames from "classnames";
+import type { RenderTabBar, Tab } from "rc-tabs/lib/interface";
+import * as React from "react";
+import { styled } from "styled-components";
+import type { Cursor } from "../Types";
 
 /**
  * The props for the {@link DraggableTabs} component.
@@ -30,7 +30,7 @@ type DraggableTabPaneProps = React.HTMLAttributes<HTMLDivElement> & {
 } & TabPaneProps;
 
 /**
- * A wapper for the Antd {@link TabPane} component with drag and drop support.
+ * A wrapper for the Antd {@link TabPane} component with drag and drop support.
  * @param param0 The component props: {@link DraggableTabPaneProps}.
  * @returns A component.
  */
@@ -46,16 +46,19 @@ const DraggableTabNode = ({ ...props }: DraggableTabPaneProps) => {
         cursor: props.cursor,
     };
 
-    return React.cloneElement(props.children as React.ReactElement, {
-        ref: setNodeRef,
-        style,
-        ...attributes,
-        ...listeners,
-    });
+    return React.cloneElement(
+        props.children as React.ReactElement,
+        {
+            ref: setNodeRef,
+            style,
+            ...attributes,
+            ...listeners,
+        } as React.HTMLAttributes<HTMLDivElement>
+    );
 };
 
 /**
- * A wapper for the Antd {@link Tabs} component with drag and drop support.
+ * A wrapper for the Antd {@link Tabs} component with drag and drop support.
  * @param {DraggableTabsProps} param0 The component props: {@link DraggableTabsProps}.
  * @returns A component.
  */
@@ -94,9 +97,10 @@ const DraggableTabsComponent = (props: DraggableTabsProps) => {
             const cursor: Cursor = isDragging ? "move" : "pointer";
             return (
                 <DraggableTabNode //
-                    {...node.props}
+                    {...(typeof node.props === "object" ? node.props : {})}
                     key={node.key}
                     cursor={cursor}
+                    data-node-key={`${node.key}`}
                 >
                     {node}
                 </DraggableTabNode>
@@ -130,7 +134,7 @@ const DraggableTabsComponent = (props: DraggableTabsProps) => {
         [onDragEnd, onDragStart, props.items, renderChildren, sensor]
     );
 
-    // Discard props not intented directly for the compoent.
+    // Discard props not intended directly for the component.
     const newProps = React.useMemo(() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { setItems: _1, onItemsReordered: _2, onDraggingChanged: _3, ...newProps } = props;

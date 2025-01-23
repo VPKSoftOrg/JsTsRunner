@@ -1,12 +1,12 @@
-import * as React from "react";
-import { Menu, MenuProps } from "antd";
-import { MenuInfo, MenuMode } from "rc-menu/lib/interface";
-import { styled } from "styled-components";
-import classNames from "classnames";
-import { ItemType, MenuDividerType, MenuItemType, SubMenuType } from "antd/es/menu/interface";
 import { type } from "@tauri-apps/plugin-os";
-import { CommonProps } from "../components/Types";
-import { MenuKeys } from "./MenuItems";
+import { Menu, type MenuProps } from "antd";
+import type { ItemType, MenuDividerType, MenuItemType, SubMenuType } from "antd/es/menu/interface";
+import classNames from "classnames";
+import type { MenuInfo, MenuMode } from "rc-menu/lib/interface";
+import * as React from "react";
+import { styled } from "styled-components";
+import type { CommonProps } from "../components/Types";
+import type { MenuKeys } from "./MenuItems";
 
 export type ShortcutKey = {
     shortcut?: {
@@ -70,7 +70,10 @@ const AppMenu = ({
 
             // Filter out shortcuts that are not for the current platform
             keydItems = keydItems.filter(item => {
-                return (item.shortcut?.ctrlOrMeta ?? false) === (osType === "macos" && e.metaKey) || (osType !== "macos" && e.ctrlKey);
+                return (
+                    (item.shortcut?.ctrlOrMeta ?? false) === (osType === "macos" && e.metaKey) ||
+                    (osType !== "macos" && e.ctrlKey)
+                );
             });
 
             keydItems = keydItems.filter(item => {
@@ -105,9 +108,11 @@ const AppMenu = ({
 };
 
 // Typeguard for SubMenuType via the children prop
-const isSubMenu = (item: ItemTypeShortcut | SubItemTypeShortcut | MenuDividerType): item is SubItemTypeShortcut => "children" in item;
+const isSubMenu = (item: ItemTypeShortcut | SubItemTypeShortcut | MenuDividerType): item is SubItemTypeShortcut =>
+    "children" in item;
 
-const isMenuDivider = (item: ItemTypeShortcut | SubItemTypeShortcut | MenuDividerType): item is MenuDividerType => "type" in item && item.type === "divider";
+const isMenuDivider = (item: ItemTypeShortcut | SubItemTypeShortcut | MenuDividerType): item is MenuDividerType =>
+    "type" in item && item.type === "divider";
 
 const filterUsableMenuItems = (items: MenuItems) => {
     // Collect the items children props into an array
@@ -119,7 +124,9 @@ const filterUsableMenuItems = (items: MenuItems) => {
             allItems.push(item);
         }
         if (isSubMenu(item)) {
-            const subItems = (item.children as (MenuDividerType | ItemTypeShortcut)[]).filter(child => !isMenuDivider(child)).map(child => child as ItemTypeShortcut);
+            const subItems = (item.children as (MenuDividerType | ItemTypeShortcut)[])
+                .filter(child => !isMenuDivider(child))
+                .map(child => child as ItemTypeShortcut);
             allItems.push(...subItems);
         }
     }
@@ -131,7 +138,10 @@ const StyledAppMenu = styled(AppMenu)`
     // Add style(s) here
 `;
 
-const renderShortcut = (label: string | null, shortcut: { keyboardKey?: string; ctrlOrMeta?: boolean; shift?: boolean; alt?: boolean }) => {
+const renderShortcut = (
+    label: string | null,
+    shortcut: { keyboardKey?: string; ctrlOrMeta?: boolean; shift?: boolean; alt?: boolean }
+) => {
     // Don't render a shortcut key for Android or iOS or if there is no label.
     if (!label || osType === "android" || osType === "ios") {
         return null;

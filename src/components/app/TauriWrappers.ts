@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 import { invoke } from "@tauri-apps/api/core";
-import { FileTabData } from "../Types";
+import type { FileTabData } from "../Types";
 
 type LineByLineLog = {
     line_number: number;
