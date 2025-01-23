@@ -22,10 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import * as React from "react";
+import { type EventCallback, TauriEvent, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
-import { EventCallback, TauriEvent, UnlistenFn } from "@tauri-apps/api/event";
 import { StateFlags, restoreStateCurrent, saveWindowState } from "@tauri-apps/plugin-window-state";
+import * as React from "react";
 
 /**
  * A hook that adds an event listener to the window object for the given event type and callback function.
@@ -87,7 +87,11 @@ const useWindowStateSaver = (intervalMs: number) => {
 
     React.useEffect(() => {
         const interval = setInterval(() => {
-            if (stateSaverEnabled && intervalPassed.current !== true && Date.now() - currentTime.current.getTime() > intervalMs) {
+            if (
+                stateSaverEnabled &&
+                intervalPassed.current !== true &&
+                Date.now() - currentTime.current.getTime() > intervalMs
+            ) {
                 intervalPassed.current = true;
                 currentTime.current = new Date();
             }

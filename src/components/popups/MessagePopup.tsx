@@ -22,14 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import * as React from "react";
-import classNames from "classnames";
-import { styled } from "styled-components";
 import { Button, Modal } from "antd";
-import { PopupTypeOk } from "../Enums";
-import { CommonProps } from "../Types";
-import { useTranslate } from "../../localization/Localization";
+import classNames from "classnames";
+import * as React from "react";
+import { styled } from "styled-components";
 import { ErrorIcon, InformationIcon, WarningIcon } from "../../img/ImageExports";
+import { useTranslate } from "../../localization/Localization";
+import { PopupTypeOk } from "../Enums";
+import type { CommonProps } from "../Types";
 
 /**
  * The props for the {@link MessagePopup} component.

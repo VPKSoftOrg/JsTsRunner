@@ -1,16 +1,16 @@
 // This code is based on the And Design Tabs demo: https://ant.design/components/tabs#tabs-demo-custom-tab-bar-node
 // I just refactored it.
 
-import * as React from "react";
-import { styled } from "styled-components";
-import classNames from "classnames";
-import { TabPaneProps, Tabs, TabsProps } from "antd";
-import { CSS } from "@dnd-kit/utilities";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { DndContext, PointerSensor, closestCenter, useSensor } from "@dnd-kit/core";
-import { arrayMove, horizontalListSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
-import { Tab, RenderTabBar } from "rc-tabs/lib/interface";
-import { Cursor } from "../Types";
+import { SortableContext, arrayMove, horizontalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { type TabPaneProps, Tabs, type TabsProps } from "antd";
+import classNames from "classnames";
+import type { RenderTabBar, Tab } from "rc-tabs/lib/interface";
+import * as React from "react";
+import { styled } from "styled-components";
+import type { Cursor } from "../Types";
 
 /**
  * The props for the {@link DraggableTabs} component.
@@ -46,12 +46,15 @@ const DraggableTabNode = ({ ...props }: DraggableTabPaneProps) => {
         cursor: props.cursor,
     };
 
-    return React.cloneElement(props.children as React.ReactElement, {
-        ref: setNodeRef,
-        style,
-        ...attributes,
-        ...listeners,
-    } as React.HTMLAttributes<HTMLDivElement>);
+    return React.cloneElement(
+        props.children as React.ReactElement,
+        {
+            ref: setNodeRef,
+            style,
+            ...attributes,
+            ...listeners,
+        } as React.HTMLAttributes<HTMLDivElement>
+    );
 };
 
 /**

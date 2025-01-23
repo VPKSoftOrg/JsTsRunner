@@ -22,14 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+import classNames from "classnames";
+import type { FieldNames } from "rc-select/lib/Select";
 import React, { type JSX } from "react";
 import { styled } from "styled-components";
-import classNames from "classnames";
-import { FieldNames } from "rc-select/lib/Select";
-import { CommonProps } from "../components/Types";
-import { TooltipObjectButton } from "../components/wrappers/TooltipObjectButton";
+import type { CommonProps } from "../components/Types";
 import { SelectWithLabel } from "../components/wrappers/SelectWithLabel";
 import { ToolTipObjectToggleButton } from "../components/wrappers/ToolTipObjectToggleButton";
+import { TooltipObjectButton } from "../components/wrappers/TooltipObjectButton";
 
 export type ToolBarItem<T> = {
     icon?: React.ReactNode;

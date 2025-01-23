@@ -22,13 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import * as React from "react";
-import classNames from "classnames";
-import { styled } from "styled-components";
 import { Button, Modal } from "antd";
-import { DialogButtons, DialogResult, PopupType } from "../Enums";
-import { CommonProps } from "../Types";
+import classNames from "classnames";
+import * as React from "react";
+import { styled } from "styled-components";
 import { useTranslate } from "../../localization/Localization";
+import { DialogButtons, DialogResult, PopupType } from "../Enums";
+import type { CommonProps } from "../Types";
 
 /**
  * The props for the {@link ConfirmPopup} component.

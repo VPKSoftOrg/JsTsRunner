@@ -22,16 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+import classNames from "classnames";
 //@ts-expect-error - React is required for JSX
 import * as React from "react";
-import classNames from "classnames";
 import { styled } from "styled-components";
-import { CommonProps } from "../components/Types";
-import saveAsIcon from "./floppy-diskette-with-pen-svgrepo-com.svg";
+import type { CommonProps } from "../components/Types";
+import errorIcon from "./error-close-svgrepo-com.svg";
 import saveIcon from "./floppy-disk-digital-data-storage-or-save-interface-symbol-svgrepo-com.svg";
+import saveAsIcon from "./floppy-diskette-with-pen-svgrepo-com.svg";
 import infoIcon from "./info-signs-svgrepo-com.svg";
 import warningIcon from "./warning-signs-svgrepo-com.svg";
-import errorIcon from "./error-close-svgrepo-com.svg";
 
 type IconProps = CommonProps & {
     darkMode?: boolean;
@@ -50,7 +50,16 @@ const SvgIcon = ({
     alt,
     icon,
 }: IconProps) => {
-    return <img src={icon} alt={alt} width={width} height={height} key={key} className={classNames(SvgIcon.name, className)} />;
+    return (
+        <img
+            src={icon}
+            alt={alt}
+            width={width}
+            height={height}
+            key={key}
+            className={classNames(SvgIcon.name, className)}
+        />
+    );
 };
 
 const StyledSvgIcon = styled(SvgIcon)`

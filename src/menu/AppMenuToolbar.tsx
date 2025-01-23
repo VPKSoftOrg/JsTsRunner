@@ -22,15 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+import classNames from "classnames";
 import * as React from "react";
 import { styled } from "styled-components";
-import classNames from "classnames";
-import { CommonProps } from "../components/Types";
+import type { CommonProps } from "../components/Types";
 import { useTranslate } from "../localization/Localization";
 import { AppMenu } from "./AppMenu";
 import { AppToolbar } from "./AppToolbar";
-import { appMenuItems, MenuKeys } from "./MenuItems";
-import { appToolbarItems, ToolBarItems } from "./ToolbarItems";
+import { type MenuKeys, appMenuItems } from "./MenuItems";
+import { type ToolBarItems, appToolbarItems } from "./ToolbarItems";
 
 /**
  * The props for the {@link AppMenuToolbar} component.

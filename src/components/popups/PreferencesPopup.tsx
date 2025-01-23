@@ -22,15 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import * as React from "react";
-import classNames from "classnames";
-import { styled } from "styled-components";
 import { Button, Checkbox, Modal, Select, Tooltip } from "antd";
-import { CheckboxChangeEvent } from "antd/es/checkbox";
-import { Settings } from "../../utilities/app/Settings";
-import { CommonProps } from "../Types";
-import { Locales, LocalizeFunction, currentLocales } from "../../localization/Localization";
-import { NotificationType } from "../../utilities/app/Notify";
+import type { CheckboxChangeEvent } from "antd/es/checkbox";
+import classNames from "classnames";
+import * as React from "react";
+import { styled } from "styled-components";
+import { type Locales, type LocalizeFunction, currentLocales } from "../../localization/Localization";
+import type { NotificationType } from "../../utilities/app/Notify";
+import type { Settings } from "../../utilities/app/Settings";
+import type { CommonProps } from "../Types";
 
 /**
  * The props for the {@link PreferencesPopup} component.

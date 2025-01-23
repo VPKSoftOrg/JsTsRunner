@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+import type { ScriptType } from "../../components/Types";
 import { getAppState, runScript, runScriptLineByLine } from "../../components/app/TauriWrappers";
-import { ScriptType } from "../../components/Types";
 import { transpileTypeSctiptToJs } from "./TypeSciptTranspile";
 
 /**
@@ -83,7 +83,12 @@ const evalueateValue = async (content: string | undefined | null, skipUndefined:
  * @param {ScriptType} scriptType - The script type. Either "javascript" or "typescript".
  * @returns {Promise<string>} The result of the evaluation.
  */
-const evalueateValueByLines = async (content: string | undefined | null, skipUndefined: boolean, skipEmptyLines: boolean, scriptType: ScriptType) => {
+const evalueateValueByLines = async (
+    content: string | undefined | null,
+    skipUndefined: boolean,
+    skipEmptyLines: boolean,
+    scriptType: ScriptType
+) => {
     if (content !== undefined && content !== null) {
         const scriptValue = content;
         let script: string[] = [];

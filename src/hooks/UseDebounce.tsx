@@ -32,7 +32,12 @@ import * as React from "react";
  * @param {() => boolean} postpone A function that returns true if the callback should be postponed.
  * @param {React.DependencyList} deps Additional dependencies for the effect.
  */
-const useDebounce = (callBack: () => void | Promise<void>, timeOut: number, postpone?: () => boolean, deps?: React.DependencyList) => {
+const useDebounce = (
+    callBack: () => void | Promise<void>,
+    timeOut: number,
+    postpone?: () => boolean,
+    deps?: React.DependencyList
+) => {
     const lastTime = React.useRef<Date>(new Date());
     const effectPending = React.useRef<boolean>(false);
 
@@ -58,6 +63,7 @@ const useDebounce = (callBack: () => void | Promise<void>, timeOut: number, post
         return () => clearInterval(onInterval);
     }, [intervalCallBack]);
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: The deps array is common in hooks.
     React.useEffect(() => {
         lastTime.current = new Date();
         effectPending.current = true;
@@ -71,7 +77,12 @@ const useDebounce = (callBack: () => void | Promise<void>, timeOut: number, post
  * @param {() => boolean} postpone A function that returns true if the callback should be postponed.
  * @param {React.DependencyList} deps Additional dependencies for the effect.
  */
-const useUserIdleDebounce = (callBack: () => void | Promise<void>, timeOut: number, postpone?: () => boolean, deps?: React.DependencyList) => {
+const useUserIdleDebounce = (
+    callBack: () => void | Promise<void>,
+    timeOut: number,
+    postpone?: () => boolean,
+    deps?: React.DependencyList
+) => {
     const [interactionOccurred, setInteractionOccurred] = React.useState<Date>(new Date());
 
     const idleDebounce = React.useCallback(() => {
@@ -80,7 +91,7 @@ const useUserIdleDebounce = (callBack: () => void | Promise<void>, timeOut: numb
 
     const useInteraction = React.useCallback(() => {
         setInteractionOccurred(new Date());
-    }, [setInteractionOccurred]);
+    }, []);
 
     React.useEffect(() => {
         window.addEventListener("mousemove", useInteraction);

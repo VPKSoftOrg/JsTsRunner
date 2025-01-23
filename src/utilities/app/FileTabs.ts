@@ -22,11 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import { save, SaveDialogOptions } from "@tauri-apps/plugin-dialog";
-import { FileTabData, ScriptType } from "../../components/Types";
-import { LocalizeFunction } from "../../localization/Localization";
+import { type SaveDialogOptions, save } from "@tauri-apps/plugin-dialog";
+import type { FileTabData, ScriptType } from "../../components/Types";
 import { saveFileContents } from "../../components/app/TauriWrappers";
-import { NotificationType } from "./Notify";
+import type { LocalizeFunction } from "../../localization/Localization";
+import type { NotificationType } from "./Notify";
 
 /**
  * Generates a new tab with the given script language and file name.
@@ -61,7 +61,11 @@ const saveTab = async (
     fileTabs: FileTabData[],
     translate: LocalizeFunction,
     saveAppStateReload: () => Promise<void>,
-    notification: (type: NotificationType, title: string | null | undefined | Error | unknown, duration?: number) => void
+    notification: (
+        type: NotificationType,
+        title: string | null | undefined | Error | unknown,
+        duration?: number
+    ) => void
 ): Promise<boolean> => {
     const index = fileTabs.findIndex(f => f.uid === activeTabKey);
     if (index !== -1) {
@@ -123,6 +127,8 @@ const getDialogFilter = (translate: LocalizeFunction, data: FileTabData): SaveDi
  * Returns the open dialog filter.
  * @returns {OpenDialogOptions} The open dialog filter.
  */
-const getOpenDialogFilter = (translate: LocalizeFunction) => ({ filters: [{ name: translate("scriptFiles", "Script Files"), extensions: ["js", "ts"] }] });
+const getOpenDialogFilter = (translate: LocalizeFunction) => ({
+    filters: [{ name: translate("scriptFiles", "Script Files"), extensions: ["js", "ts"] }],
+});
 
 export { genNewTab, saveTab, getDialogFilter, getOpenDialogFilter };
