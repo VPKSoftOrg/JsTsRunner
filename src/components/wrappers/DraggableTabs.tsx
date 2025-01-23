@@ -30,7 +30,7 @@ type DraggableTabPaneProps = React.HTMLAttributes<HTMLDivElement> & {
 } & TabPaneProps;
 
 /**
- * A wapper for the Antd {@link TabPane} component with drag and drop support.
+ * A wrapper for the Antd {@link TabPane} component with drag and drop support.
  * @param param0 The component props: {@link DraggableTabPaneProps}.
  * @returns A component.
  */
@@ -51,11 +51,11 @@ const DraggableTabNode = ({ ...props }: DraggableTabPaneProps) => {
         style,
         ...attributes,
         ...listeners,
-    });
+    } as React.HTMLAttributes<HTMLDivElement>);
 };
 
 /**
- * A wapper for the Antd {@link Tabs} component with drag and drop support.
+ * A wrapper for the Antd {@link Tabs} component with drag and drop support.
  * @param {DraggableTabsProps} param0 The component props: {@link DraggableTabsProps}.
  * @returns A component.
  */
@@ -94,9 +94,10 @@ const DraggableTabsComponent = (props: DraggableTabsProps) => {
             const cursor: Cursor = isDragging ? "move" : "pointer";
             return (
                 <DraggableTabNode //
-                    {...node.props}
+                    {...(typeof node.props === "object" ? node.props : {})}
                     key={node.key}
                     cursor={cursor}
+                    data-node-key={`${node.key}`}
                 >
                     {node}
                 </DraggableTabNode>
@@ -130,7 +131,7 @@ const DraggableTabsComponent = (props: DraggableTabsProps) => {
         [onDragEnd, onDragStart, props.items, renderChildren, sensor]
     );
 
-    // Discard props not intented directly for the compoent.
+    // Discard props not intended directly for the component.
     const newProps = React.useMemo(() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { setItems: _1, onItemsReordered: _2, onDraggingChanged: _3, ...newProps } = props;
