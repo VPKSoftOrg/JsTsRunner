@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import * as React from "react";
+import React, { type JSX } from "react";
 import { styled } from "styled-components";
 import classNames from "classnames";
 import { FieldNames } from "rc-select/lib/Select";
