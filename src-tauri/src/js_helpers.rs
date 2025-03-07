@@ -22,13 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use std::sync::Mutex;
-
 use crate::types::LineByLineLog;
+use std::sync::RwLock;
 
-static mut LOG_STACK: Mutex<Vec<String>> = Mutex::new(vec![]);
-static mut LOG_STACK_LINES: Mutex<Vec<LineByLineLog>> = Mutex::new(vec![]);
-static mut FILE_LINE: Mutex<Option<i32>> = Mutex::new(None);
+static LOG_STACK: RwLock<Vec<String>> = RwLock::new(vec![]);
+static LOG_STACK_LINES: RwLock<Vec<LineByLineLog>> = RwLock::new(vec![]);
+static FILE_LINE: RwLock<Option<i32>> = RwLock::new(None);
 
 /// Formats the v8 log call arguments to a string.
 ///
@@ -144,89 +143,75 @@ pub fn js_console_error_capture_lines(
 /// # Arguments
 /// * `value` - The value to push.
 pub fn push_log_stack(value: String) {
-    unsafe {
-        match LOG_STACK.lock() {
-            Ok(mut stack) => {
-                stack.push(value);
-            }
-            Err(_) => {}
+    match LOG_STACK.write() {
+        Ok(mut stack) => {
+            stack.push(value);
         }
+        Err(_) => {}
     }
 }
 
 pub fn set_file_line(file_line: Option<i32>) {
-    unsafe {
-        match FILE_LINE.lock() {
-            Ok(mut file_line_mutex) => {
-                *file_line_mutex = file_line;
-            }
-            Err(_) => {}
+    match FILE_LINE.write() {
+        Ok(mut file_line_mutex) => {
+            *file_line_mutex = file_line;
         }
+        Err(_) => {}
     }
 }
 
 pub fn push_log_stack_file_line(value: String) {
-    unsafe {
-        match FILE_LINE.lock() {
-            Ok(file_line) => match *file_line {
-                Some(file_line) => {
-                    match LOG_STACK_LINES.lock() {
-                        Ok(mut log_stack) => {
-                            let stack = log_stack
-                                .iter_mut()
-                                .find(|line| line.line_number == file_line);
+    match FILE_LINE.read() {
+        Ok(file_line) => match *file_line {
+            Some(file_line) => {
+                match LOG_STACK_LINES.write() {
+                    Ok(mut log_stack) => {
+                        let stack = log_stack
+                            .iter_mut()
+                            .find(|line| line.line_number == file_line);
 
-                            match stack {
-                                Some(stack) => {
-                                    stack.lines.push(value);
-                                }
-                                None => {
-                                    log_stack.push(LineByLineLog {
-                                        line_number: file_line,
-                                        lines: vec![value],
-                                    });
-                                }
+                        match stack {
+                            Some(stack) => {
+                                stack.lines.push(value);
+                            }
+                            None => {
+                                log_stack.push(LineByLineLog {
+                                    line_number: file_line,
+                                    lines: vec![value],
+                                });
                             }
                         }
-                        Err(_) => {
-                            push_log_stack(value);
-                        }
-                    };
-                }
-                None => {
-                    push_log_stack(value);
-                }
-            },
-            Err(_) => {
+                    }
+                    Err(_) => {
+                        push_log_stack(value);
+                    }
+                };
+            }
+            None => {
                 push_log_stack(value);
             }
+        },
+        Err(_) => {
+            push_log_stack(value);
         }
     }
 }
 
 /// Clears the log stack.
 pub fn clear_log_stack() {
-    unsafe {
-        match LOG_STACK.lock() {
-            Ok(mut stack) => {
-                stack.clear();
-            }
-            Err(_) => {}
-        }
+    match LOG_STACK.write() {
+        Ok(mut stack) => stack.clear(),
+        Err(_) => {}
+    };
 
-        match LOG_STACK_LINES.lock() {
-            Ok(mut stack) => {
-                stack.clear();
-            }
-            Err(_) => {}
-        }
+    match LOG_STACK_LINES.write() {
+        Ok(mut stack) => stack.clear(),
+        Err(_) => {}
+    }
 
-        match FILE_LINE.lock() {
-            Ok(mut file_line) => {
-                *file_line = None;
-            }
-            Err(_) => {}
-        }
+    match FILE_LINE.write() {
+        Ok(mut stack) => *stack = None,
+        Err(_) => {}
     }
 }
 
@@ -235,11 +220,9 @@ pub fn clear_log_stack() {
 /// # Returns
 /// The log stack as a vector of strings.
 pub fn get_log_stack() -> Vec<String> {
-    unsafe {
-        match LOG_STACK.lock() {
-            Ok(stack) => stack.clone(),
-            Err(_) => vec![],
-        }
+    match LOG_STACK.read() {
+        Ok(stack) => stack.clone(),
+        Err(_) => vec![],
     }
 }
 
@@ -248,10 +231,8 @@ pub fn get_log_stack() -> Vec<String> {
 /// # Returns
 /// The log stack as a vector of file line numbers and their corresponding lines.
 pub fn get_log_stack_by_file_line() -> Vec<LineByLineLog> {
-    unsafe {
-        match LOG_STACK_LINES.lock() {
-            Ok(stack) => stack.clone(),
-            Err(_) => vec![],
-        }
+    match LOG_STACK_LINES.read() {
+        Ok(stack) => stack.clone(),
+        Err(_) => vec![],
     }
 }
